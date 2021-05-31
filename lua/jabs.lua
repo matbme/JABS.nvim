@@ -37,8 +37,25 @@ function M.selBufNum(win)
 	vim.cmd('close')
 
 	api.nvim_set_current_win(win)
-	vim.cmd('b'..buf)
+	vim.cmd(string.format('b%s', buf))
 end
+
+-- Close buffer from line
+function M.closeBufNum(win)
+  local l = api.nvim_get_current_line()
+  local buf = l:split(' ', true)[4]
+
+  local current_buf = api.nvim_win_get_buf(win)
+  local jabs_buf = api.nvim_get_current_buf()
+
+  if tonumber(buf) ~= current_buf then
+    vim.cmd(string.format('bd %s', buf))
+    M.refresh(jabs_buf)
+  else
+    api.nvim_notify('JABS: Cannot close current buffer!', 3, {})
+  end
+end
+
 
 -- Parse ls string
 function M.parseLs(bopen, buf)
@@ -106,9 +123,12 @@ function M.setKeymaps(win, buf)
 	api.nvim_feedkeys('j', 'n', false)
 
 	-- Basic window buffer configuration
-	api.nvim_buf_set_option(buf, 'modifiable', false)
 	api.nvim_buf_set_keymap(buf, 'n', '<CR>',
-							':lua require\'jabs\'.selBufNum('..win..')<CR>',
+							string.format([[:lua require'jabs'.selBufNum(%s)<CR>]], win),
+							{ nowait = true, noremap = true, silent = true } )
+
+	api.nvim_buf_set_keymap(buf, 'n', 'D',
+							string.format([[:lua require'jabs'.closeBufNum(%s)<CR>]], win),
 							{ nowait = true, noremap = true, silent = true } )
 
 	-- Navigation keymaps
@@ -122,31 +142,34 @@ function M.setKeymaps(win, buf)
 							{ nowait = true, noremap = true, silent = true } )
 end
 
+function M.refresh(buf)
+  local bopen = api.nvim_exec(':ls', true)
+  bopen = bopen:split('\n', true)
+
+	local empty = {}
+	for _ = 1, #bopen+1 do empty[#empty+1] = string.rep(' ', M.opts['width']) end
+
+	api.nvim_buf_set_option(buf, 'modifiable', true)
+	api.nvim_buf_set_lines(buf, 0, -1, false, empty)
+
+  M.parseLs(bopen, buf)
+
+	-- Draw title
+	local title = 'Open buffers:'
+	api.nvim_buf_set_text(buf, 0, 1, 0, title:len()+1, {title})
+	api.nvim_buf_add_highlight(buf, -1, 'Folded', 0, 0, -1)
+	api.nvim_buf_set_option(buf, 'modifiable', false)
+end
+
 -- Floating buffer list
 function M.open()
-	-- Get ls output for parsing
-	local bopen = api.nvim_exec(':ls', true)
-	bopen = bopen:split('\n', true)
-
 	-- Create the buffer for the window
 	local win = api.nvim_get_current_win()
 	local buf = api.nvim_create_buf(false, true)
 
 	api.nvim_open_win(buf, 1, M.opts)
 
-	-- Fill buffer with right size of space
-	local empty = {}
-	for _ = 1, #bopen+1 do empty[#empty+1] = string.rep(' ', M.opts['width']) end
-	api.nvim_buf_set_lines(buf, 0, -1, false, empty)
-
-	-- Parse open buffers
-	M.parseLs(bopen, buf)
-
-	-- Draw title
-	local title = 'Open buffers:'
-	api.nvim_buf_set_text(buf, 0, 1, 0, title:len()+1, {title})
-	api.nvim_buf_add_highlight(buf, -1, 'Folded', 0, 0, -1)
-
+  M.refresh(buf)
 	M.setKeymaps(win, buf)
 end
 
