@@ -52,8 +52,8 @@ function M.closeBufNum(win)
 
   if tonumber(buf) ~= current_buf then
     vim.cmd(string.format('bd %s', buf))
-	local ln = api.nvim_win_get_cursor(0)[1]
-	table.remove(M.bopen, ln-1)
+    local ln = api.nvim_win_get_cursor(0)[1]
+    table.remove(M.bopen, ln-1)
 
     M.refresh(jabs_buf)
   else

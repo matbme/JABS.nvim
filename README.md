@@ -24,7 +24,18 @@ use 'matbme/JABS.nvim'
 
 As previously mentioned, JABS only has one command: `:JABSOpen`, which opens JABS' window.
 
-By default, you can navigate between buffers with `h` and `j` as well as `<Tab>` and `<S-Tab>`, and jump to a buffer with `<CR>`. When switching buffers the window closes automatically, but it can also be closed with `<Esc>` or `q`.
+By default, you can navigate between buffers with `j` and `k` as well as `<Tab>` and `<S-Tab>`, and jump to a buffer with `<CR>`. When switching buffers the window closes automatically, but it can also be closed with `<Esc>` or `q`.
+
+### Default Keymap
+
+| Key       | Action         |
+|-----------|----------------|
+| j         | navigate down  |
+| k         | navigate up    |
+| D         | close buffer   |
+| `<Tab>`   | navigate down  |
+| `<S-Tab>` | navigate up    |
+| `<CR>`    | jump to buffer |
 
 ### Color coding
 
@@ -42,7 +53,7 @@ JABS is in its infancy and there's still a lot to be done. Here's the currently 
 
 - [ ] Switch to buffer by typing its number
 - [ ] Preview buffer
-- [ ] Close buffer with keymap
+- [x] Close buffer with keymap
 - [ ] Open buffer in split
 - [ ] Sort modes (maybe visible and alternate on top)
 
