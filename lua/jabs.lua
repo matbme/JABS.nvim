@@ -3,6 +3,8 @@ local api = vim.api
 
 local ui = api.nvim_list_uis()[1]
 
+M.bopen = {}
+
 require 'split'
 
 M.opts = {
@@ -50,16 +52,22 @@ function M.closeBufNum(win)
 
   if tonumber(buf) ~= current_buf then
     vim.cmd(string.format('bd %s', buf))
+	local ln = api.nvim_win_get_cursor(0)[1]
+	table.remove(M.bopen, ln-1)
+
     M.refresh(jabs_buf)
   else
     api.nvim_notify('JABS: Cannot close current buffer!', 3, {})
   end
+
+  vim.wo.number = false
+  vim.wo.relativenumber = false
 end
 
 
 -- Parse ls string
-function M.parseLs(bopen, buf)
-	for i, b in ipairs(bopen) do
+function M.parseLs(buf)
+	for i, b in ipairs(M.bopen) do
 		local line = ''			-- Line to be added to buffer
 		local si = 0			-- Non-empty split counter
 		local highlight = ''	-- Line highlight group
@@ -143,16 +151,13 @@ function M.setKeymaps(win, buf)
 end
 
 function M.refresh(buf)
-  local bopen = api.nvim_exec(':ls', true)
-  bopen = bopen:split('\n', true)
-
 	local empty = {}
-	for _ = 1, #bopen+1 do empty[#empty+1] = string.rep(' ', M.opts['width']) end
+	for _ = 1, #M.bopen+1 do empty[#empty+1] = string.rep(' ', M.opts['width']) end
 
 	api.nvim_buf_set_option(buf, 'modifiable', true)
 	api.nvim_buf_set_lines(buf, 0, -1, false, empty)
 
-  M.parseLs(bopen, buf)
+	M.parseLs()
 
 	-- Draw title
 	local title = 'Open buffers:'
@@ -163,13 +168,14 @@ end
 
 -- Floating buffer list
 function M.open()
+	M.bopen = api.nvim_exec(':ls', true):split('\n', true)
 	-- Create the buffer for the window
 	local win = api.nvim_get_current_win()
 	local buf = api.nvim_create_buf(false, true)
 
 	api.nvim_open_win(buf, 1, M.opts)
 
-  M.refresh(buf)
+	M.refresh(buf)
 	M.setKeymaps(win, buf)
 end
 
