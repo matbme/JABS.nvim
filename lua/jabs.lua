@@ -31,15 +31,21 @@ M.bufinfo = {
 	['F']			= '',
 }
 
+M.openOptions = {
+	window			= 'b%s',
+	vsplit			= 'vert sb %s',
+	hsplit			= 'sb %s',
+}
+
 -- Open buffer from line
-function M.selBufNum(win)
+function M.selBufNum(win, opt)
 	local l = api.nvim_get_current_line()
 	local buf = l:split(' ', true)[4]
 
 	vim.cmd('close')
 
 	api.nvim_set_current_win(win)
-	vim.cmd(string.format('b%s', buf))
+	vim.cmd(string.format(M.openOptions[opt], buf))
 end
 
 -- Close buffer from line
@@ -132,9 +138,14 @@ function M.setKeymaps(win, buf)
 
 	-- Basic window buffer configuration
 	api.nvim_buf_set_keymap(buf, 'n', '<CR>',
-							string.format([[:lua require'jabs'.selBufNum(%s)<CR>]], win),
+							string.format([[:lua require'jabs'.selBufNum(%s, 'window')<CR>]], win),
 							{ nowait = true, noremap = true, silent = true } )
-
+	api.nvim_buf_set_keymap(buf, 'n', 's',
+							string.format([[:lua require'jabs'.selBufNum(%s, 'hsplit')<CR>]], win),
+							{ nowait = true, noremap = true, silent = true } )
+	api.nvim_buf_set_keymap(buf, 'n', 'v',
+							string.format([[:lua require'jabs'.selBufNum(%s, 'vsplit')<CR>]], win),
+							{ nowait = true, noremap = true, silent = true } )
 	api.nvim_buf_set_keymap(buf, 'n', 'D',
 							string.format([[:lua require'jabs'.closeBufNum(%s)<CR>]], win),
 							{ nowait = true, noremap = true, silent = true } )

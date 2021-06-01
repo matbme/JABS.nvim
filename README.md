@@ -26,16 +26,16 @@ As previously mentioned, JABS only has one command: `:JABSOpen`, which opens JAB
 
 By default, you can navigate between buffers with `j` and `k` as well as `<Tab>` and `<S-Tab>`, and jump to a buffer with `<CR>`. When switching buffers the window closes automatically, but it can also be closed with `<Esc>` or `q`.
 
-### Default Keymap
+### Default Keymaps
 
-| Key       | Action         |
-|-----------|----------------|
-| j         | navigate down  |
-| k         | navigate up    |
-| D         | close buffer   |
-| `<Tab>`   | navigate down  |
-| `<S-Tab>` | navigate up    |
-| `<CR>`    | jump to buffer |
+| Key               | Action                          |
+|-------------------|---------------------------------|
+| j or `<Tab>`      | navigate down                   |
+| k or `<S-Tab>`    | navigate up                     |
+| D                 | close buffer                    |
+| `<CR>`            | jump to buffer                  |
+| s                 | open buffer in horizontal split |
+| v                 | open buffer in vertical split   |
 
 ### Color coding
 
@@ -53,8 +53,8 @@ JABS is in its infancy and there's still a lot to be done. Here's the currently 
 
 - [ ] Switch to buffer by typing its number
 - [ ] Preview buffer
-- [x] Close buffer with keymap
-- [ ] Open buffer in split
+- [x] Close buffer with keymap (huge thanks to [@garymjr](https://github.com/garymjr))
+- [x] Open buffer in split
 - [ ] Sort modes (maybe visible and alternate on top)
 
 Suggestions are always welcome 🙂!
