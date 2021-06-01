@@ -53,7 +53,7 @@ JABS is in its infancy and there's still a lot to be done. Here's the currently 
 
 - [ ] Switch to buffer by typing its number
 - [ ] Preview buffer
-- [x] Close buffer with keymap (huge thanks to @garymjr)
+- [x] Close buffer with keymap (huge thanks to [@garymjr](https://github.com/garymjr))
 - [x] Open buffer in split
 - [ ] Sort modes (maybe visible and alternate on top)
 
