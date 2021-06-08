@@ -97,6 +97,9 @@ function M.parseLs(buf)
 					return M.bufinfo[s:sub(s:len(),s:len())]
 				end)
 
+				-- Fixes #3
+				symbol = symbol or M.bufinfo['h']
+
 				line = '· '..symbol..' '..line
 			-- Other non-empty splits (filename, RO, modified, ...)
 			else
