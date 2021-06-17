@@ -19,9 +19,9 @@ M.opts = {
 }
 
 M.bufinfo = {
-    ['%a']          = {'', 'MoreMsg'},
-    ['#a']          = {'', 'MoreMsg'},
-    ['a']           = {'', 'MoreMsg'},
+    ['%a']          = {'', 'StatusLine'},
+    ['#a']          = {'', 'StatusLine'},
+    ['a']           = {'', 'StatusLine'},
     ['#h']          = {'', 'WarningMsg'},
     ['h']           = {'﬘', 'ModeMsg'},
     ['-']           = '',
