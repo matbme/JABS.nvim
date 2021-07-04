@@ -9,7 +9,7 @@ JABS shows exactly what you would expect to see with `:buffers` or `:ls`, but in
 
 ## Requirements
 
-- Neovim version with Lua support (I only tested with v0.5 Nightly)
+- Neovim ≥ v0.5
 - A patched [nerd font](https://www.nerdfonts.com/) for the buffer icons
 
 ## Installation
@@ -37,6 +37,8 @@ By default, you can navigate between buffers with `j` and `k` as well as `<Tab>`
 | s                 | open buffer in horizontal split |
 | v                 | open buffer in vertical split   |
 
+If you don't feel like manually navigating to the buffer you want to open, you can type its number before `<CR>`, `s`, or `v` to quickly split or switch to it.
+
 ### Color coding
 
 - Your current visible buffers are shown in green
@@ -51,7 +53,7 @@ By default, you can navigate between buffers with `j` and `k` as well as `<Tab>`
 
 JABS is in its infancy and there's still a lot to be done. Here's the currently planned features:
 
-- [ ] Switch to buffer by typing its number
+- [x] Switch to buffer by typing its number
 - [ ] Preview buffer
 - [x] Close buffer with keymap (huge thanks to [@garymjr](https://github.com/garymjr))
 - [x] Open buffer in split
