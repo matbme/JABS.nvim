@@ -38,11 +38,32 @@ M.openOptions = {
 }
 
 -- Open buffer from line
-function M.selBufNum(win, opt)
-    local l = api.nvim_get_current_line()
-    local buf = l:split(' ', true)[4]
+function M.selBufNum(win, opt, count)
+    local buf = nil
+
+    -- Check for buffer number
+    if count ~= 0 then
+        local lines = api.nvim_buf_get_lines(0, 1, -1, true)
+
+        for _, line in pairs(lines) do
+            local linebuf = line:split(' ', true)[4]
+            if tonumber(linebuf) == count then 
+                buf = linebuf
+                break
+            end
+        end
+    -- Or if it's just an ENTER
+    else
+        local l = api.nvim_get_current_line()
+        buf = l:split(' ', true)[4]
+    end
 
     vim.cmd('close')
+
+    if not buf then
+        print('Buffer number not found!')
+        return
+    end
 
     api.nvim_set_current_win(win)
     vim.cmd(string.format(M.openOptions[opt], buf))
@@ -141,13 +162,13 @@ function M.setKeymaps(win, buf)
 
     -- Basic window buffer configuration
     api.nvim_buf_set_keymap(buf, 'n', '<CR>',
-                            string.format([[:lua require'jabs'.selBufNum(%s, 'window')<CR>]], win),
+                            string.format([[:<C-U>lua require'jabs'.selBufNum(%s, 'window', vim.v.count)<CR>]], win),
                             { nowait = true, noremap = true, silent = true } )
     api.nvim_buf_set_keymap(buf, 'n', 's',
-                            string.format([[:lua require'jabs'.selBufNum(%s, 'hsplit')<CR>]], win),
+                            string.format([[:<C-U>lua require'jabs'.selBufNum(%s, 'hsplit', vim.v.count)<CR>]], win),
                             { nowait = true, noremap = true, silent = true } )
     api.nvim_buf_set_keymap(buf, 'n', 'v',
-                            string.format([[:lua require'jabs'.selBufNum(%s, 'vsplit')<CR>]], win),
+                            string.format([[:<C-U>lua require'jabs'.selBufNum(%s, 'vsplit', vim.v.count)<CR>]], win),
                             { nowait = true, noremap = true, silent = true } )
     api.nvim_buf_set_keymap(buf, 'n', 'D',
                             string.format([[:lua require'jabs'.closeBufNum(%s)<CR>]], win),
