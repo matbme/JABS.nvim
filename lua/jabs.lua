@@ -47,7 +47,7 @@ function M.selBufNum(win, opt, count)
 
         for _, line in pairs(lines) do
             local linebuf = line:split(' ', true)[4]
-            if tonumber(linebuf) == count then 
+            if tonumber(linebuf) == count then
                 buf = linebuf
                 break
             end
@@ -142,8 +142,9 @@ function M.parseLs(buf)
     line = line:gsub('\"', '')
 
     -- Truncate line if too long
-    if line:len() > M.opts['width']-linenr:len()-3 then
-        line = line:sub(1, M.opts['width']-linenr:len()-6)..'...'
+    local filename_space = M.opts['width']-linenr:len()-3
+    if line:len() > filename_space then
+        line = line:gsub(string.rep('%S', line:len()-filename_space+3), '...', 1)
     end
 
     -- Write line
