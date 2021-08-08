@@ -96,16 +96,12 @@ end
 function M.parseLs(buf)
     for i, b in ipairs(M.bopen) do
     local line = ''			-- Line to be added to buffer
-    local si = 0			-- Non-empty split counter
     local highlight = ''	-- Line highlight group
     local linenr			-- Buffer line number
 
-    for _, s in ipairs(b:split(' ', true)) do
-        if s == '' then goto continue end	-- Empty splits are discarded
-        si = si + 1
-
+    for si, s in ipairs(b:split(' ', true)) do
         -- Split with buffer information
-        if si == 2 then
+        if si == 4 then
             _, highlight = xpcall(function()
                 return M.bufinfo[s][2]
             end, function()
@@ -127,15 +123,13 @@ function M.parseLs(buf)
             if s:sub(2, 8) == 'term://' then
                 line = line..'Terminal'..s:gsub("^.*:", ": \"")
             else
-                if tonumber(s) ~= nil and si > 2 then linenr = s else
-                    if s:sub(1,4) ~= 'line' then
+                if tonumber(s) ~= nil and si > 4 then linenr = s else
+                    if s:sub(1,4) ~= 'line' and s ~= '' then
                         line = line..(M.bufinfo[s] or s)..' '
                     end
                 end
             end
         end
-
-        ::continue::
     end
 
     -- Remove quotes from filename
