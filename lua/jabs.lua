@@ -58,7 +58,7 @@ function M.selBufNum(win, opt, count)
         buf = l:split(' ', true)[4]
     end
 
-    vim.cmd('close')
+    vim.cmd('bwipeout')
 
     if not buf then
         print('Buffer number not found!')
@@ -170,9 +170,9 @@ function M.setKeymaps(win, buf)
                             { nowait = true, noremap = true, silent = true } )
 
     -- Navigation keymaps
-    api.nvim_buf_set_keymap(buf, 'n', 'q', ':close<CR>',
+    api.nvim_buf_set_keymap(buf, 'n', 'q', ':bwipeout<CR>',
                             { nowait = true, noremap = true, silent = true } )
-    api.nvim_buf_set_keymap(buf, 'n', '<Esc>', ':close<CR>',
+    api.nvim_buf_set_keymap(buf, 'n', '<Esc>', ':bwipeout<CR>',
                             { nowait = true, noremap = true, silent = true } )
     api.nvim_buf_set_keymap(buf, 'n', '<Tab>', 'j',
                             { nowait = true, noremap = true, silent = true } )
