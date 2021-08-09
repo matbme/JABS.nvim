@@ -3,6 +3,8 @@ local api = vim.api
 
 local ui = api.nvim_list_uis()[1]
 
+M.win = nil
+M.buf = nil
 M.bopen = {}
 
 require 'split'
@@ -58,7 +60,7 @@ function M.selBufNum(win, opt, count)
         buf = l:split(' ', true)[4]
     end
 
-    vim.cmd('bwipeout')
+    M.close()
 
     if not buf then
         print('Buffer number not found!')
@@ -170,14 +172,21 @@ function M.setKeymaps(win, buf)
                             { nowait = true, noremap = true, silent = true } )
 
     -- Navigation keymaps
-    api.nvim_buf_set_keymap(buf, 'n', 'q', ':bwipeout<CR>',
+    api.nvim_buf_set_keymap(buf, 'n', 'q', ':lua require"jabs".close()<CR>',
                             { nowait = true, noremap = true, silent = true } )
-    api.nvim_buf_set_keymap(buf, 'n', '<Esc>', ':bwipeout<CR>',
+    api.nvim_buf_set_keymap(buf, 'n', '<Esc>', ':lua require"jabs".close()<CR>',
                             { nowait = true, noremap = true, silent = true } )
     api.nvim_buf_set_keymap(buf, 'n', '<Tab>', 'j',
                             { nowait = true, noremap = true, silent = true } )
     api.nvim_buf_set_keymap(buf, 'n', '<S-Tab>', 'k',
                             { nowait = true, noremap = true, silent = true } )
+end
+
+function M.close()
+    api.nvim_win_close(M.win, false)
+    api.nvim_buf_delete(M.buf, {})
+    M.win = nil
+    M.buf = nil
 end
 
 function M.refresh(buf)
@@ -199,14 +208,16 @@ end
 -- Floating buffer list
 function M.open()
     M.bopen = api.nvim_exec(':ls', true):split('\n', true)
+    local back_win = api.nvim_get_current_win()
     -- Create the buffer for the window
-    local win = api.nvim_get_current_win()
-    local buf = api.nvim_create_buf(false, true)
-
-    api.nvim_open_win(buf, 1, M.opts)
-
-    M.refresh(buf)
-    M.setKeymaps(win, buf)
+    if not M.buf and not M.win then
+        M.buf = api.nvim_create_buf(false, true)
+        M.win = api.nvim_open_win(M.buf, 1, M.opts)
+        M.refresh(M.buf)
+        M.setKeymaps(back_win, M.buf)
+    else
+        M.close()
+    end
 end
 
 return M
