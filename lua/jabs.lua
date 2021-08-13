@@ -3,6 +3,8 @@ local api = vim.api
 
 local ui = api.nvim_list_uis()[1]
 
+M.win = nil
+M.buf = nil
 M.bopen = {}
 
 require 'split'
@@ -58,7 +60,7 @@ function M.selBufNum(win, opt, count)
         buf = l:split(' ', true)[4]
     end
 
-    vim.cmd('close')
+    M.close()
 
     if not buf then
         print('Buffer number not found!')
@@ -96,16 +98,12 @@ end
 function M.parseLs(buf)
     for i, b in ipairs(M.bopen) do
     local line = ''			-- Line to be added to buffer
-    local si = 0			-- Non-empty split counter
     local highlight = ''	-- Line highlight group
     local linenr			-- Buffer line number
 
-    for _, s in ipairs(b:split(' ', true)) do
-        if s == '' then goto continue end	-- Empty splits are discarded
-        si = si + 1
-
+    for si, s in ipairs(b:split(' ', true)) do
         -- Split with buffer information
-        if si == 2 then
+        if si == 4 then
             _, highlight = xpcall(function()
                 return M.bufinfo[s][2]
             end, function()
@@ -127,15 +125,13 @@ function M.parseLs(buf)
             if s:sub(2, 8) == 'term://' then
                 line = line..'Terminal'..s:gsub("^.*:", ": \"")
             else
-                if tonumber(s) ~= nil and si > 2 then linenr = s else
-                    if s:sub(1,4) ~= 'line' then
+                if tonumber(s) ~= nil and si > 4 then linenr = s else
+                    if s:sub(1,4) ~= 'line' and s ~= '' then
                         line = line..(M.bufinfo[s] or s)..' '
                     end
                 end
             end
         end
-
-        ::continue::
     end
 
     -- Remove quotes from filename
@@ -176,14 +172,21 @@ function M.setKeymaps(win, buf)
                             { nowait = true, noremap = true, silent = true } )
 
     -- Navigation keymaps
-    api.nvim_buf_set_keymap(buf, 'n', 'q', ':close<CR>',
+    api.nvim_buf_set_keymap(buf, 'n', 'q', ':lua require"jabs".close()<CR>',
                             { nowait = true, noremap = true, silent = true } )
-    api.nvim_buf_set_keymap(buf, 'n', '<Esc>', ':close<CR>',
+    api.nvim_buf_set_keymap(buf, 'n', '<Esc>', ':lua require"jabs".close()<CR>',
                             { nowait = true, noremap = true, silent = true } )
     api.nvim_buf_set_keymap(buf, 'n', '<Tab>', 'j',
                             { nowait = true, noremap = true, silent = true } )
     api.nvim_buf_set_keymap(buf, 'n', '<S-Tab>', 'k',
                             { nowait = true, noremap = true, silent = true } )
+end
+
+function M.close()
+    api.nvim_win_close(M.win, false)
+    api.nvim_buf_delete(M.buf, {})
+    M.win = nil
+    M.buf = nil
 end
 
 function M.refresh(buf)
@@ -205,14 +208,16 @@ end
 -- Floating buffer list
 function M.open()
     M.bopen = api.nvim_exec(':ls', true):split('\n', true)
+    local back_win = api.nvim_get_current_win()
     -- Create the buffer for the window
-    local win = api.nvim_get_current_win()
-    local buf = api.nvim_create_buf(false, true)
-
-    api.nvim_open_win(buf, 1, M.opts)
-
-    M.refresh(buf)
-    M.setKeymaps(win, buf)
+    if not M.buf and not M.win then
+        M.buf = api.nvim_create_buf(false, true)
+        M.win = api.nvim_open_win(M.buf, 1, M.opts)
+        M.refresh(M.buf)
+        M.setKeymaps(back_win, M.buf)
+    else
+        M.close()
+    end
 end
 
 return M
