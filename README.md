@@ -26,6 +26,24 @@ As previously mentioned, JABS only has one command: `:JABSOpen`, which opens JAB
 
 By default, you can navigate between buffers with `j` and `k` as well as `<Tab>` and `<S-Tab>`, and jump to a buffer with `<CR>`. When switching buffers the window closes automatically, but it can also be closed with `<Esc>` or `q`.
 
+## Configuration
+All configuration happens within the setup function, below are all of the options with their default values:
+
+```lua
+require 'jabs'.setup {
+	position = 'center', -- center, corner
+	width = 50,
+	height = 10,
+	border = 'shadow', -- none, single, double, rounded, solid, shadow, (or an array or chars)
+	
+	-- the options below are ignored when position = 'center'
+	col = 0,
+	row = 0,
+	anchor = 'NW', -- NW, NE, SW, SE
+	relative 'win', -- editor, win, cursor
+}
+```
+
 ### Default Keymaps
 
 | Key               | Action                          |
