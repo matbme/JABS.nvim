@@ -6,19 +6,36 @@ local ui = api.nvim_list_uis()[1]
 M.win = nil
 M.buf = nil
 M.bopen = {}
+M.conf = {}
+M.win_conf = {}
 
 require 'split'
 
-M.opts = {
-    ['relative']    = 'cursor',
-    ['width']       = 50,
-    ['height']      = 10,
-    ['col']         = (ui.width) - 7,
-    ['row']         = (ui.height) - 3,
-    ['anchor']      = 'SE',
-    ['style']       = 'minimal',
-    ['border']      = 'shadow',
-}
+function M.setup(c)
+	local c = c or {}
+
+	M.win_conf = {
+		width		= c.width or 50,
+		height		= c.height or 10,
+		style		= c.style or 'minimal',
+		border		= c.border or 'shadow',
+		col			= c.col or (ui.width) - 7,
+		row			= c.row or (ui.height) - 3,
+		anchor		= c.anchor or 'SW',
+		relative	= c.relative or 'win',
+	}
+
+	M.conf = {
+		position = c.position or 'center'
+	}
+
+	if M.conf.position == 'center' then
+		M.win_conf.relative	= 'win'
+		M.win_conf.anchor	= 'NW'
+		M.win_conf.col		= (ui.width/2) - (M.win_conf.width/2)
+		M.win_conf.row		= (ui.height/2) - (M.win_conf.height/2)
+	end
+end
 
 M.bufinfo = {
     ['%a']          = {'', 'StatusLine'},
@@ -138,15 +155,14 @@ function M.parseLs(buf)
     line = line:gsub('\"', '')
 
     -- Truncate line if too long
-    local filename_space = M.opts['width']-linenr:len()-3
+    local filename_space = M.win_conf.width - linenr:len()-3
     if line:len() > filename_space then
         line = line:gsub(string.rep('%S', line:len()-filename_space+3), '...', 1)
     end
 
     -- Write line
     api.nvim_buf_set_text(buf, i, 1, i, line:len(), {line})
-    api.nvim_buf_set_text(buf, i, M.opts['width']-linenr:len(), i,
-                          M.opts['width'], {' '..linenr})
+    api.nvim_buf_set_text(buf, i, M.win_conf.width - linenr:len(), i, M.win_conf.width, {' '..linenr})
 
     api.nvim_buf_add_highlight(buf, -1, highlight, i, 0, -1)
     end
@@ -191,7 +207,7 @@ end
 
 function M.refresh(buf)
     local empty = {}
-    for _ = 1, #M.bopen+1 do empty[#empty+1] = string.rep(' ', M.opts['width']) end
+    for _ = 1, #M.bopen+1 do empty[#empty+1] = string.rep(' ', M.win_conf.width) end
 
     api.nvim_buf_set_option(buf, 'modifiable', true)
     api.nvim_buf_set_lines(buf, 0, -1, false, empty)
@@ -212,7 +228,7 @@ function M.open()
     -- Create the buffer for the window
     if not M.buf and not M.win then
         M.buf = api.nvim_create_buf(false, true)
-        M.win = api.nvim_open_win(M.buf, 1, M.opts)
+        M.win = api.nvim_open_win(M.buf, 1, M.win_conf )
         M.refresh(M.buf)
         M.setKeymaps(back_win, M.buf)
     else
