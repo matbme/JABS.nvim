@@ -114,57 +114,62 @@ end
 -- Parse ls string
 function M.parseLs(buf)
     for i, b in ipairs(M.bopen) do
-    local line = ''			-- Line to be added to buffer
-    local highlight = ''	-- Line highlight group
-    local linenr			-- Buffer line number
+        local si = 0            -- not empty split count
+        local line = ''			-- Line to be added to buffer
+        local highlight = ''	-- Line highlight group
+        local linenr			-- Buffer line number
 
-    for si, s in ipairs(b:split(' ', true)) do
-        -- Split with buffer information
-        if si == 4 then
-            _, highlight = xpcall(function()
-                return M.bufinfo[s][2]
-            end, function()
-                return M.bufinfo[s:sub(1,s:len()-1)][2]
-            end)
+        for _, s in ipairs(b:split(' ', true)) do
+            if s:len() == 0 then goto continue end
+            si = si + 1
+            -- Split with buffer information
+            if si == 2 then
+                _, highlight = xpcall(function()
+                    return M.bufinfo[s][2]
+                end, function()
+                    return M.bufinfo[s:sub(1,s:len()-1)][2]
+                end)
 
-            local _, symbol = xpcall(function()
-                return M.bufinfo[s][1]
-            end, function()
-                return M.bufinfo[s:sub(s:len(),s:len())]
-            end)
+                local _, symbol = xpcall(function()
+                    return M.bufinfo[s][1]
+                end, function()
+                    return M.bufinfo[s:sub(s:len(),s:len())]
+                end)
 
-            -- Fixes #3
-            symbol = symbol or M.bufinfo['h'][1]
+                -- Fixes #3
+                symbol = symbol or M.bufinfo['h'][1]
 
-            line = '· '..symbol..' '..line
-        -- Other non-empty splits (filename, RO, modified, ...)
-        else
-            if s:sub(2, 8) == 'term://' then
-                line = line..'Terminal'..s:gsub("^.*:", ": \"")
+                line = '· '..symbol..' '..line
+            -- Other non-empty splits (filename, RO, modified, ...)
             else
-                if tonumber(s) ~= nil and si > 4 then linenr = s else
-                    if s:sub(1,4) ~= 'line' and s ~= '' then
-                        line = line..(M.bufinfo[s] or s)..' '
+                if s:sub(2, 8) == 'term://' then
+                    line = line..'Terminal'..s:gsub("^.*:", ": \"")
+                else
+                    if tonumber(s) ~= nil and si > 2 then linenr = s else
+                        if s:sub(1,4) ~= 'line' and s ~= '' then
+                            print(s)
+                            line = line..(M.bufinfo[s] or s)..' '
+                        end
                     end
                 end
             end
+            ::continue::
         end
-    end
 
-    -- Remove quotes from filename
-    line = line:gsub('\"', '')
+        -- Remove quotes from filename
+        line = line:gsub('\"', '')
 
-    -- Truncate line if too long
-    local filename_space = M.win_conf.width - linenr:len()-3
-    if line:len() > filename_space then
-        line = line:gsub(string.rep('%S', line:len()-filename_space+3), '...', 1)
-    end
+        -- Truncate line if too long
+        local filename_space = M.win_conf.width - linenr:len()-3
+        if line:len() > filename_space then
+            line = line:gsub(string.rep('%S', line:len()-filename_space+3), '...', 1)
+        end
 
-    -- Write line
-    api.nvim_buf_set_text(buf, i, 1, i, line:len(), {line})
-    api.nvim_buf_set_text(buf, i, M.win_conf.width - linenr:len(), i, M.win_conf.width, {' '..linenr})
+        -- Write line
+        api.nvim_buf_set_text(buf, i, 1, i, line:len(), {line})
+        api.nvim_buf_set_text(buf, i, M.win_conf.width - linenr:len(), i, M.win_conf.width, {' '..linenr})
 
-    api.nvim_buf_add_highlight(buf, -1, highlight, i, 0, -1)
+        api.nvim_buf_add_highlight(buf, -1, highlight, i, 0, -1)
     end
 end
 
