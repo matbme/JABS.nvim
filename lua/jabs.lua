@@ -160,7 +160,7 @@ function M.parseLs(buf)
         line = line:gsub('\"', '')
 
         -- Truncate line if too long
-        local filename_space = M.win_conf.width - linenr:len()-3
+        local filename_space = M.win_conf.width - (linenr:len() - 3 or 0)
         if line:len() > filename_space then
             line = line:gsub(string.rep('%S', line:len()-filename_space+3), '...', 1)
         end
