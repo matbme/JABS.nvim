@@ -117,7 +117,7 @@ function M.parseLs(buf)
         local si = 0            -- not empty split count
         local line = ''			-- Line to be added to buffer
         local highlight = ''	-- Line highlight group
-        local linenr			-- Buffer line number
+        local linenr = ''		-- Buffer line number
 
         for _, s in ipairs(b:split(' ', true)) do
             if s:len() == 0 then goto continue end
@@ -160,7 +160,7 @@ function M.parseLs(buf)
         line = line:gsub('\"', '')
 
         -- Truncate line if too long
-        local filename_space = M.win_conf.width - (linenr:len() - 3 or 0)
+        local filename_space = M.win_conf.width - linenr:len() - 3
         if line:len() > filename_space then
             line = line:gsub(string.rep('%S', line:len()-filename_space+3), '...', 1)
         end
