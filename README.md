@@ -50,8 +50,8 @@ require 'jabs'.setup {
     },
 
    	-- the options below are ignored when position = 'center'
-   	col = ui.width,  -- Window appears on the right
-   	row = ui.height/2, -- Window appears in the vertical middle
+    col = ui.width,  -- Window appears on the right
+    row = ui.height/2, -- Window appears in the vertical middle
 }
 ```
 
