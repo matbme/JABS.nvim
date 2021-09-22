@@ -26,21 +26,32 @@ As previously mentioned, JABS only has one command: `:JABSOpen`, which opens JAB
 
 By default, you can navigate between buffers with `j` and `k` as well as `<Tab>` and `<S-Tab>`, and jump to a buffer with `<CR>`. When switching buffers the window closes automatically, but it can also be closed with `<Esc>` or `q`.
 
+You can also open a preview window for the buffer selected under the cursor with `<S-p>`, which by default appears above JABS' window. See below how to change its default behavior.
+
 ## Configuration
 All configuration happens within the setup function, where you can change the window's size, border, and placement. JABS appears by default on the bottom right, but you can change it to be in any corner or even in the center:
 
 ```lua
+-- (Optional) easy way to get Neovim current size.
+local ui = vim.api.nvim_list_uis()[1]
+
 require 'jabs'.setup {
-	position = 'center', -- center, corner
+	position = 'corner', -- center, corner
 	width = 50,
 	height = 10,
 	border = 'shadow', -- none, single, double, rounded, solid, shadow, (or an array or chars)
 	
+    -- Options for preview window
+    preview_position = 'left', -- top, bottom, left, right
+    preview = {
+        width = 40,
+        height = 30,
+        border = 'double', -- none, single, double, rounded, solid, shadow, (or an array or chars)
+    },
+
 	-- the options below are ignored when position = 'center'
-	col = 0,
-	row = 0,
-	anchor = 'NW', -- NW, NE, SW, SE
-	relative = 'win', -- editor, win, cursor
+	col = ui.width,  -- Window appears on the right
+	row = ui.height/2, -- Window appears in the vertical middle
 }
 ```
 
@@ -54,14 +65,15 @@ require 'jabs'.setup {
 | `<CR>`            | jump to buffer                  |
 | s                 | open buffer in horizontal split |
 | v                 | open buffer in vertical split   |
+| `<S-p>`           | open preview for buffer         |
 
 If you don't feel like manually navigating to the buffer you want to open, you can type its number before `<CR>`, `s`, or `v` to quickly split or switch to it.
 
 ### Color coding
 
-- Your current visible buffers are shown in green
+- Your current visible buffers are shown in a green background
 - The alternate buffer (`<C-^>`) is shown in yellow
-- All other buffers are shown in white
+- All other buffers are shown in plain white/green (depending on colorscheme)
 
 ### Symbols
 
@@ -72,7 +84,7 @@ If you don't feel like manually navigating to the buffer you want to open, you c
 JABS is in its infancy and there's still a lot to be done. Here's the currently planned features:
 
 - [x] Switch to buffer by typing its number
-- [ ] Preview buffer
+- [x] Preview buffer
 - [x] Close buffer with keymap (huge thanks to [@garymjr](https://github.com/garymjr))
 - [x] Open buffer in split
 - [ ] Sort modes (maybe visible and alternate on top)
