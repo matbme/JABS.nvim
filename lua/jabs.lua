@@ -23,8 +23,8 @@ function M.setup(c)
     if not c.preview then c.preview = {} end
 
 	M.win_conf = {
-		width		= c.width or 70,
-		height		= c.height or 30,
+		width		= c.width or 50,
+		height		= c.height or 10,
 		style		= c.style or 'minimal',
 		border		= c.border or 'shadow',
 		anchor		= 'NW',
@@ -56,17 +56,17 @@ function M.setup(c)
 
     -- TODO: Convert to a table
     if M.conf.preview_position == 'top' then
-        M.preview_conf.col = M.win_conf.width / 4
+        M.preview_conf.col = M.win_conf.width/2 - M.preview_conf.width/2
         M.preview_conf.row = -M.preview_conf.height - 2
     elseif M.conf.preview_position == 'bottom' then
-        M.preview_conf.col = M.win_conf.width / 4
+        M.preview_conf.col = M.win_conf.width/2 - M.preview_conf.width/2
         M.preview_conf.row = M.win_conf.height
     elseif M.conf.preview_position == 'right' then
         M.preview_conf.col = M.win_conf.width
-        M.preview_conf.row = -M.preview_conf.height / 4 - M.preview_conf.height / 8
+        M.preview_conf.row = M.win_conf.height/2 - M.preview_conf.height/2
     elseif M.conf.preview_position == 'left' then
         M.preview_conf.col = -M.preview_conf.width
-        M.preview_conf.row = -M.preview_conf.height / 4 - M.preview_conf.height / 8
+        M.preview_conf.row = M.win_conf.height/2 - M.preview_conf.height/2
     end
 end
 
