@@ -3,38 +3,71 @@ local api = vim.api
 
 local ui = api.nvim_list_uis()[1]
 
-M.win = nil
-M.buf = nil
+-- JABS main popup
+M.main_win = nil
+M.main_buf = nil
+
+-- Buffer preview popup
+M.prev_win = nil
+M.prev_buf = nil
+
 M.bopen = {}
 M.conf = {}
 M.win_conf = {}
+M.preview_conf = {}
 
 require 'split'
 
 function M.setup(c)
 	local c = c or {}
+    if not c.preview then c.preview = {} end
 
 	M.win_conf = {
 		width		= c.width or 50,
 		height		= c.height or 10,
 		style		= c.style or 'minimal',
 		border		= c.border or 'shadow',
-		col			= c.col or (ui.width) - 7,
-		row			= c.row or (ui.height) - 3,
-		anchor		= c.anchor or 'SW',
+		anchor		= 'NW',
 		relative	= c.relative or 'win',
 	}
 
+    M.win_conf.col = c.col or (ui.width - M.win_conf.width)
+    M.win_conf.row = c.row or (ui.height - M.win_conf.height)
+
+    M.preview_conf = {
+        width       = c.preview.width or 70,
+        height      = c.preview.height or 30,
+        style       = c.preview.style or 'minimal',
+        border      = c.preview.border or 'double',
+        anchor      = M.win_conf.anchor,
+        relative    = c.preview.relative or 'win',
+    }
+
 	M.conf = {
-		position = c.position or 'center'
+		position = c.position or 'corner',
+        preview_position = c.preview_position or 'top',
 	}
 
 	if M.conf.position == 'center' then
 		M.win_conf.relative	= 'win'
-		M.win_conf.anchor	= 'NW'
 		M.win_conf.col		= (ui.width/2) - (M.win_conf.width/2)
 		M.win_conf.row		= (ui.height/2) - (M.win_conf.height/2)
 	end
+
+    -- TODO: Convert to a table
+    if M.conf.preview_position == 'top' then
+        M.preview_conf.col = M.win_conf.width/2 - M.preview_conf.width/2
+        M.preview_conf.row = -M.preview_conf.height - 2
+    elseif M.conf.preview_position == 'bottom' then
+        M.preview_conf.col = M.win_conf.width/2 - M.preview_conf.width/2
+        M.preview_conf.row = M.win_conf.height
+    elseif M.conf.preview_position == 'right' then
+        M.preview_conf.col = M.win_conf.width
+        M.preview_conf.row = M.win_conf.height/2 - M.preview_conf.height/2
+    elseif M.conf.preview_position == 'left' then
+        M.preview_conf.col = -M.preview_conf.width
+        M.preview_conf.row = M.win_conf.height/2 - M.preview_conf.height/2
+    end
 end
 
 M.bufinfo = {
@@ -86,6 +119,15 @@ function M.selBufNum(win, opt, count)
 
     api.nvim_set_current_win(win)
     vim.cmd(string.format(M.openOptions[opt], buf))
+end
+
+-- Preview buffer
+function M.previewBuf()
+    local l = api.nvim_get_current_line()
+    local buf = l:split(' ', true)[4]
+
+    -- Create the buffer for preview window
+    M.prev_win = api.nvim_open_win(buf, 1, M.preview_conf)
 end
 
 -- Close buffer from line
@@ -191,6 +233,9 @@ function M.setKeymaps(win, buf)
     api.nvim_buf_set_keymap(buf, 'n', 'D',
                             string.format([[:lua require'jabs'.closeBufNum(%s)<CR>]], win),
                             { nowait = true, noremap = true, silent = true } )
+    api.nvim_buf_set_keymap(buf, 'n', 'P',
+                            string.format([[:lua require'jabs'.previewBuf()<CR>]], win),
+                            { nowait = true, noremap = true, silent = true } )
 
     -- Navigation keymaps
     api.nvim_buf_set_keymap(buf, 'n', 'q', ':lua require"jabs".close()<CR>',
@@ -204,10 +249,18 @@ function M.setKeymaps(win, buf)
 end
 
 function M.close()
-    api.nvim_win_close(M.win, false)
-    api.nvim_buf_delete(M.buf, {})
-    M.win = nil
-    M.buf = nil
+    -- If JABS is closed using :q the window and buffer indicator variables
+    -- are not reset, so we need to take this into account
+    xpcall(function ()
+        api.nvim_win_close(M.main_win, false)
+        api.nvim_buf_delete(M.main_buf, {})
+        M.main_win = nil
+        M.main_buf = nil
+    end, function ()
+        M.main_win = nil
+        M.main_buf = nil
+        M.open()
+    end)
 end
 
 function M.refresh(buf)
@@ -217,7 +270,7 @@ function M.refresh(buf)
     api.nvim_buf_set_option(buf, 'modifiable', true)
     api.nvim_buf_set_lines(buf, 0, -1, false, empty)
 
-    M.parseLs()
+    M.parseLs(buf)
 
     -- Draw title
     local title = 'Open buffers:'
@@ -231,11 +284,11 @@ function M.open()
     M.bopen = api.nvim_exec(':ls', true):split('\n', true)
     local back_win = api.nvim_get_current_win()
     -- Create the buffer for the window
-    if not M.buf and not M.win then
-        M.buf = api.nvim_create_buf(false, true)
-        M.win = api.nvim_open_win(M.buf, 1, M.win_conf )
-        M.refresh(M.buf)
-        M.setKeymaps(back_win, M.buf)
+    if not M.main_buf and not M.main_win then
+        M.main_buf = api.nvim_create_buf(false, true)
+        M.main_win = api.nvim_open_win(M.main_buf, 1, M.win_conf )
+        M.refresh(M.main_buf)
+        M.setKeymaps(back_win, M.main_buf)
     else
         M.close()
     end
