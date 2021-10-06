@@ -189,7 +189,6 @@ function M.parseLs(buf)
                 else
                     if tonumber(s) ~= nil and si > 2 then linenr = s else
                         if s:sub(1,4) ~= 'line' and s ~= '' then
-                            print(s)
                             line = line..(M.bufinfo[s] or s)..' '
                         end
                     end
