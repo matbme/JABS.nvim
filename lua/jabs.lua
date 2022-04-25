@@ -31,9 +31,6 @@ function M.setup(c)
 		relative	= c.relative or 'win',
 	}
 
-    M.win_conf.col = c.col or (ui.width - M.win_conf.width)
-    M.win_conf.row = c.row or (ui.height - M.win_conf.height)
-
     M.preview_conf = {
         width       = c.preview.width or 70,
         height      = c.preview.height or 30,
@@ -47,12 +44,6 @@ function M.setup(c)
 		position = c.position or 'corner',
         preview_position = c.preview_position or 'top',
 	}
-
-	if M.conf.position == 'center' then
-		M.win_conf.relative	= 'win'
-		M.win_conf.col		= (ui.width/2) - (M.win_conf.width/2)
-		M.win_conf.row		= (ui.height/2) - (M.win_conf.height/2)
-	end
 
     -- TODO: Convert to a table
     if M.conf.preview_position == 'top' then
@@ -68,6 +59,9 @@ function M.setup(c)
         M.preview_conf.col = -M.preview_conf.width
         M.preview_conf.row = M.win_conf.height/2 - M.preview_conf.height/2
     end
+
+    M.updatePos()
+
 end
 
 M.bufinfo = {
@@ -88,6 +82,19 @@ M.openOptions = {
     vsplit          = 'vert sb %s',
     hsplit          = 'sb %s',
 }
+
+function M.updatePos()
+    ui = api.nvim_list_uis()[1]
+
+    if M.conf.position == 'corner' then
+        M.win_conf.col = ui.width - M.win_conf.width
+        M.win_conf.row = ui.height - M.win_conf.height
+    elseif M.conf.position == 'center' then
+        M.win_conf.relative	= 'win'
+        M.win_conf.col		= (ui.width/2) - (M.win_conf.width/2)
+        M.win_conf.row		= (ui.height/2) - (M.win_conf.height/2)
+    end
+end
 
 -- Open buffer from line
 function M.selBufNum(win, opt, count)
@@ -127,7 +134,7 @@ function M.previewBuf()
     local buf = l:split(' ', true)[4]
 
     -- Create the buffer for preview window
-    M.prev_win = api.nvim_open_win(buf, 1, M.preview_conf)
+    M.prev_win = api.nvim_open_win(tonumber(buf), 1, M.preview_conf)
 end
 
 -- Close buffer from line
@@ -189,7 +196,6 @@ function M.parseLs(buf)
                 else
                     if tonumber(s) ~= nil and si > 2 then linenr = s else
                         if s:sub(1,4) ~= 'line' and s ~= '' then
-                            print(s)
                             line = line..(M.bufinfo[s] or s)..' '
                         end
                     end
@@ -276,6 +282,8 @@ function M.refresh(buf)
     local title = 'Open buffers:'
     api.nvim_buf_set_text(buf, 0, 1, 0, title:len()+1, {title})
     api.nvim_buf_add_highlight(buf, -1, 'Folded', 0, 0, -1)
+
+    -- Disable modifiable when done
     api.nvim_buf_set_option(buf, 'modifiable', false)
 end
 
@@ -285,8 +293,9 @@ function M.open()
     local back_win = api.nvim_get_current_win()
     -- Create the buffer for the window
     if not M.main_buf and not M.main_win then
+        M.updatePos()
         M.main_buf = api.nvim_create_buf(false, true)
-        M.main_win = api.nvim_open_win(M.main_buf, 1, M.win_conf )
+        M.main_win = api.nvim_open_win(M.main_buf, 1, M.win_conf)
         M.refresh(M.main_buf)
         M.setKeymaps(back_win, M.main_buf)
     else
