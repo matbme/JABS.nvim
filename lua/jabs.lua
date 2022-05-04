@@ -223,9 +223,6 @@ end
 
 -- Set floating window keymaps
 function M.setKeymaps(win, buf)
-    -- Move to second line
-    api.nvim_feedkeys('j', 'n', false)
-
     -- Basic window buffer configuration
     api.nvim_buf_set_keymap(buf, 'n', '<CR>',
                             string.format([[:<C-U>lua require'jabs'.selBufNum(%s, 'window', vim.v.count)<CR>]], win),
@@ -252,6 +249,9 @@ function M.setKeymaps(win, buf)
                             { nowait = true, noremap = true, silent = true } )
     api.nvim_buf_set_keymap(buf, 'n', '<S-Tab>', 'k',
                             { nowait = true, noremap = true, silent = true } )
+
+    -- Prevent cursor from going to buffer title
+    vim.cmd(string.format("au CursorMoved <buffer=%s> if line(\".\") == 1 | call feedkeys('j', 'n') | endif", buf))
 end
 
 function M.close()
