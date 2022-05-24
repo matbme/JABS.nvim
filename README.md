@@ -1,5 +1,5 @@
 # JABS.nvim
-**J**ust **A**nother **B**uffer **S**witcher is a minimal buffer switcher window for Neovim written in Lua. 
+**J**ust **A**nother **B**uffer **S**witcher is a minimal buffer switcher window for Neovim written in Lua.
 
 ## How minimal? One command and one window minimal!
 
@@ -29,29 +29,31 @@ By default, you can navigate between buffers with `j` and `k` as well as `<Tab>`
 You can also open a preview window for the buffer selected under the cursor with `<S-p>`, which by default appears above JABS' window. See below how to change its default behavior.
 
 ## Configuration
-All configuration happens within the setup function, where you can change the window's size, border, and placement. JABS appears by default on the bottom right, but you can change it to be in any corner or even in the center:
+All configuration happens within the setup function, which you *must* call inside your `init.lua` file even if you want to stick with the defaut values. Alternatively, you can redefine a number of parameters to tweak JABS to your liking such as the window's size, border, and placement.
+
+A minimal configuration keeping all the defaults would look like this:
 
 ```lua
--- (Optional) easy way to get Neovim current size.
-local ui = vim.api.nvim_list_uis()[1]
+require 'jabs'.setup {}
+```
 
+A more complex config changing every default value would look like this:
+
+```lua
 require 'jabs'.setup {
-    position = 'corner', -- center, corner
-   	width = 50,
-   	height = 10,
-   	border = 'shadow', -- none, single, double, rounded, solid, shadow, (or an array or chars)
+    -- Options for the main window
+    position = 'center', -- center, corner. Default corner
+    width = 80, -- default 50
+    height = 20, -- default 10
+    border = 'single', -- none, single, double, rounded, solid, shadow, (or an array or chars). Default shadow
 
     -- Options for preview window
-    preview_position = 'left', -- top, bottom, left, right
+    preview_position = 'left', -- top, bottom, left, right. Default top
     preview = {
-        width = 40,
-        height = 30,
-        border = 'double', -- none, single, double, rounded, solid, shadow, (or an array or chars)
+        width = 40, -- default 70
+        height = 60, -- default 30
+        border = 'single', -- none, single, double, rounded, solid, shadow, (or an array or chars). Default double
     },
-
-   	-- the options below are ignored when position = 'center'
-    col = ui.width,  -- Window appears on the right
-    row = ui.height/2, -- Window appears in the vertical middle
 }
 ```
 
@@ -69,12 +71,6 @@ require 'jabs'.setup {
 
 If you don't feel like manually navigating to the buffer you want to open, you can type its number before `<CR>`, `s`, or `v` to quickly split or switch to it.
 
-### Color coding
-
-- Your current visible buffers are shown in a green background
-- The alternate buffer (`<C-^>`) is shown in yellow
-- All other buffers are shown in plain white/green (depending on colorscheme)
-
 ### Symbols
 
 <img src="screenshots/icons.png"/>
@@ -88,5 +84,6 @@ JABS is in its infancy and there's still a lot to be done. Here's the currently 
 - [x] Close buffer with keymap (huge thanks to [@garymjr](https://github.com/garymjr))
 - [x] Open buffer in split
 - [ ] Sort modes (maybe visible and alternate on top)
+- [ ] Custom keymaps
 
 Suggestions are always welcome 🙂!
