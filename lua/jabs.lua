@@ -330,8 +330,10 @@ function M.open()
         M.updatePos()
         M.main_buf = api.nvim_create_buf(false, true)
         M.main_win = api.nvim_open_win(M.main_buf, 1, M.win_conf)
-        M.refresh(M.main_buf)
-        M.setKeymaps(back_win, M.main_buf)
+        if M.main_win ~= 0 then
+            M.refresh(M.main_buf)
+            M.setKeymaps(back_win, M.main_buf)
+        end
     else
         M.close()
     end
