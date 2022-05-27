@@ -3,6 +3,13 @@ local api = vim.api
 
 local ui = api.nvim_list_uis()[1]
 
+local default_highlights = {
+    current = "StatusLine",
+    split = "StatusLine",
+    alternate = "WarningMsg",
+    hidden = "ModeMsg",
+}
+
 -- JABS main popup
 M.main_win = nil
 M.main_buf = nil
@@ -23,6 +30,21 @@ function M.setup(c)
     if not c.preview then
         c.preview = {}
     end
+
+    M.hl = vim.tbl_extend("force", default_highlights, c.hl or {})
+
+    M.bufinfo = {
+        ["%a"] = { "", M.hl.current },
+        ["#a"] = { "", M.hl.split },
+        ["a"] = { "", M.hl.split },
+        ["#h"] = { "", M.hl.alternate },
+        ["h"] = { "﬘", M.hl.hidden },
+        ["-"] = { "", M.hl.locked },
+        ["="] = { "", M.hl.read_only },
+        ["+"] = { "", M.hl.changed },
+        ["R"] = { "", M.hl.terminal },
+        ["F"] = { "", M.hl.terminal },
+    }
 
     M.win_conf = {
         width = c.width or 50,
