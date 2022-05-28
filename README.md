@@ -1,4 +1,6 @@
 # JABS.nvim
+
+
 **J**ust **A**nother **B**uffer **S**witcher is a minimal buffer switcher window for Neovim written in Lua.
 
 ## How minimal? One command and one window minimal!
@@ -16,7 +18,7 @@ JABS shows exactly what you would expect to see with `:buffers` or `:ls`, but in
 
 You can install JABS with your plugin manager of choice. If you use `packer.nvim`, simply add to your plugin list:
 
-``` lua
+```lua
 use 'matbme/JABS.nvim'
 ```
 
@@ -29,6 +31,7 @@ By default, you can navigate between buffers with `j` and `k` as well as `<Tab>`
 You can also open a preview window for the buffer selected under the cursor with `<S-p>`, which by default appears above JABS' window. See below how to change its default behavior.
 
 ## Configuration
+
 All configuration happens within the setup function, which you *must* call inside your `init.lua` file even if you want to stick with the defaut values. Alternatively, you can redefine a number of parameters to tweak JABS to your liking such as the window's size, border, and placement.
 
 A minimal configuration keeping all the defaults would look like this:
@@ -54,20 +57,36 @@ require 'jabs'.setup {
         height = 60, -- default 30
         border = 'single', -- none, single, double, rounded, solid, shadow, (or an array or chars). Default double
     },
+
+    -- Default Highlights
+    hl = {
+        current = "StatusLine",
+        split = "StatusLine",
+        alternate = "WarningMsg",
+        hidden = "ModeMsg",
+        locked  = nil,
+        read_only  = nil,
+        changed  = nil,
+        terminal  = nil,
+    },
+
+   	-- the options below are ignored when position = 'center'
+    col = ui.width,  -- Window appears on the right
+    row = ui.height/2, -- Window appears in the vertical middle
 }
 ```
 
 ### Default Keymaps
 
-| Key               | Action                          |
-|-------------------|---------------------------------|
-| j or `<Tab>`      | navigate down                   |
-| k or `<S-Tab>`    | navigate up                     |
-| D                 | close buffer                    |
-| `<CR>`            | jump to buffer                  |
-| s                 | open buffer in horizontal split |
-| v                 | open buffer in vertical split   |
-| `<S-p>`           | open preview for buffer         |
+| Key            | Action                          |
+| -------------- | ------------------------------- |
+| j or `<Tab>`   | navigate down                   |
+| k or `<S-Tab>` | navigate up                     |
+| D              | close buffer                    |
+| `<CR>`         | jump to buffer                  |
+| s              | open buffer in horizontal split |
+| v              | open buffer in vertical split   |
+| `<S-p>`        | open preview for buffer         |
 
 If you don't feel like manually navigating to the buffer you want to open, you can type its number before `<CR>`, `s`, or `v` to quickly split or switch to it.
 

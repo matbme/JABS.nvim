@@ -16,13 +16,47 @@ M.conf = {}
 M.win_conf = {}
 M.preview_conf = {}
 
+M.openOptions = {
+    window = "b%s",
+    vsplit = "vert sb %s",
+    hsplit = "sb %s",
+}
+
 require "split"
 
 function M.setup(c)
     local c = c or {}
+
+    -- If preview opts table not provided in config
     if not c.preview then
         c.preview = {}
     end
+
+    -- If highlight opts table not provided in config
+    if not c.highlight then
+        c.highlight = {}
+    end
+
+    M.highlight = {
+        ["%a"] = c.highlight.current or "StatusLine",
+        ["#a"] = c.highlight.split or "StatusLine",
+        ["a"] = c.highlight.split or "StatusLine",
+        ["#h"] = c.highlight.alternate or "WarningMsg",
+        ["h"] = c.highlight.hidden or "ModeMsg",
+    }
+
+    M.bufinfo = {
+        ["%a"] =  "",
+        ["#a"] =  "",
+        ["a"] =  "",
+        ["#h"] =  "",
+        ["h"] =  "﬘",
+        ["-"] =  "",
+        ["="] =  "",
+        ["+"] =  "",
+        ["R"] =  "",
+        ["F"] =  "",
+    }
 
     M.win_conf = {
         width = c.width or 50,
@@ -64,25 +98,6 @@ function M.setup(c)
 
     M.updatePos()
 end
-
-M.bufinfo = {
-    ["%a"] = { "", "StatusLine" },
-    ["#a"] = { "", "StatusLine" },
-    ["a"] = { "", "StatusLine" },
-    ["#h"] = { "", "WarningMsg" },
-    ["h"] = { "﬘", "ModeMsg" },
-    ["-"] = "",
-    ["="] = "",
-    ["+"] = "",
-    ["R"] = "",
-    ["F"] = "",
-}
-
-M.openOptions = {
-    window = "b%s",
-    vsplit = "vert sb %s",
-    hsplit = "sb %s",
-}
 
 function M.updatePos()
     ui = api.nvim_list_uis()[1]
@@ -176,19 +191,19 @@ function M.parseLs(buf)
             -- Split with buffer information
             if si == 2 then
                 _, highlight = xpcall(function()
-                    return M.bufinfo[s][2]
+                    return M.highlight[s]
                 end, function()
-                    return M.bufinfo[s:sub(1, s:len() - 1)][2]
+                    return M.highlight[s:sub(1, s:len() - 1)]
                 end)
 
                 local _, symbol = xpcall(function()
-                    return M.bufinfo[s][1]
+                    return M.bufinfo[s]
                 end, function()
                     return M.bufinfo[s:sub(s:len(), s:len())]
                 end)
 
                 -- Fixes #3
-                symbol = symbol or M.bufinfo["h"][1]
+                symbol = symbol or M.bufinfo["h"]
 
                 line = "· " .. symbol .. " " .. line
                 -- Other non-empty splits (filename, RO, modified, ...)
