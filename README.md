@@ -55,7 +55,7 @@ require 'jabs'.setup {
     hl = {
         current = "StatusLine",
         split = "StatusLine",
-        alternate = "WarningMsg", 
+        alternate = "WarningMsg",
         hidden = "ModeMsg",
         locked  = nil,
         read_only  = nil,
