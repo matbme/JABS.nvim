@@ -58,8 +58,8 @@ require 'jabs'.setup {
         border = 'single', -- none, single, double, rounded, solid, shadow, (or an array or chars). Default double
     },
 
-    -- Default Highlights
-    hl = {
+    -- Default highlights
+    highlight = {
         current = "StatusLine",
         split = "StatusLine",
         alternate = "WarningMsg",
@@ -68,6 +68,18 @@ require 'jabs'.setup {
         read_only  = nil,
         changed  = nil,
         terminal  = nil,
+    },
+
+    -- Default symbols
+    symbols = {
+        current = "C", -- default 
+        split = "S", -- default 
+        alternate = "A", -- default 
+        hidden = "H", -- default ﬘
+        locked = "L", -- default 
+        ro = "R", -- default 
+        edited = "E", -- default 
+        terminal = "T" -- default 
     },
 
    	-- the options below are ignored when position = 'center'
