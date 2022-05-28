@@ -37,6 +37,11 @@ function M.setup(c)
         c.highlight = {}
     end
 
+    -- If symbol opts table not provided in config
+    if not c.symbols then
+        c.symbols = {}
+    end
+
     M.highlight = {
         ["%a"] = c.highlight.current or "StatusLine",
         ["#a"] = c.highlight.split or "StatusLine",
@@ -46,16 +51,16 @@ function M.setup(c)
     }
 
     M.bufinfo = {
-        ["%a"] =  "",
-        ["#a"] =  "",
-        ["a"] =  "",
-        ["#h"] =  "",
-        ["h"] =  "﬘",
-        ["-"] =  "",
-        ["="] =  "",
-        ["+"] =  "",
-        ["R"] =  "",
-        ["F"] =  "",
+        ["%a"] = c.symbols.current or "",
+        ["#a"] = c.symbols.split or "",
+        ["a"] = c.symbols.split or "",
+        ["#h"] = c.symbols.alternate or "",
+        ["h"] = c.symbols.hidden or "﬘",
+        ["-"] = c.symbols.locked or "",
+        ["="] = c.symbols.ro or "",
+        ["+"] = c.symbols.edited or "",
+        ["R"] = c.symbols.terminal or "",
+        ["F"] = c.symbols.terminal or "",
     }
 
     M.win_conf = {
@@ -227,14 +232,14 @@ function M.parseLs(buf)
         line = line:gsub('"', "")
 
         -- Truncate line if too long
-        local filename_space = M.win_conf.width - linenr:len() - 3
+        local filename_space = M.win_conf.width - (linenr:len() + 2) - 3
         if line:len() > filename_space then
             line = line:gsub(string.rep("%S", line:len() - filename_space + 3), "...", 1)
         end
 
         -- Write line
         api.nvim_buf_set_text(buf, i, 1, i, line:len(), { line })
-        api.nvim_buf_set_text(buf, i, M.win_conf.width - linenr:len(), i, M.win_conf.width, { " " .. linenr })
+        api.nvim_buf_set_text(buf, i, M.win_conf.width - linenr:len() - 2, i, M.win_conf.width, { " " .. linenr })
 
         api.nvim_buf_add_highlight(buf, -1, highlight, i, 0, -1)
     end
