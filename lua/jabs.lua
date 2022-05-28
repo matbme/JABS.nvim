@@ -42,6 +42,7 @@ function M.setup(c)
         c.symbols = {}
     end
 
+    -- Highlight names
     M.highlight = {
         ["%a"] = c.highlight.current or "StatusLine",
         ["#a"] = c.highlight.split or "StatusLine",
@@ -50,6 +51,7 @@ function M.setup(c)
         ["h"] = c.highlight.hidden or "ModeMsg",
     }
 
+    -- Buffer info symbols
     M.bufinfo = {
         ["%a"] = c.symbols.current or "",
         ["#a"] = c.symbols.split or "",
@@ -63,6 +65,13 @@ function M.setup(c)
         ["F"] = c.symbols.terminal or "",
     }
 
+    -- Use devicons file symbols
+    M.use_devicons = c.use_devicons and true
+
+    -- Fallback file symbol for devicon
+    M.default_file = c.symbols.default_file or ""
+
+    -- Main window setup
     M.win_conf = {
         width = c.width or 50,
         height = c.height or 10,
@@ -72,6 +81,7 @@ function M.setup(c)
         relative = c.relative or "win",
     }
 
+    -- Preview window setup
     M.preview_conf = {
         width = c.preview.width or 70,
         height = c.preview.height or 30,
@@ -81,6 +91,7 @@ function M.setup(c)
         relative = c.preview.relative or "win",
     }
 
+    -- Position setup
     M.conf = {
         position = c.position or "corner",
         preview_position = c.preview_position or "top",
@@ -104,6 +115,7 @@ function M.setup(c)
     M.updatePos()
 end
 
+-- Update window position
 function M.updatePos()
     ui = api.nvim_list_uis()[1]
 
@@ -117,6 +129,23 @@ function M.updatePos()
     end
 end
 
+-- Get file symbol from devicons
+function M.getFileSymbol(s)
+    local file = s:split('/', true)
+    local filename = file[#file]
+
+    local ext = filename:split('.', true)
+    ext = ext[#ext]
+
+    local devicons = pcall(require, "nvim-web-devicons")
+    if devicons then
+	    local icon, hl = require("nvim-web-devicons").get_icon(filename, ext)
+        return icon, hl
+    else
+        return nil, nil
+    end
+end
+
 -- Open buffer from line
 function M.selBufNum(win, opt, count)
     local buf = nil
@@ -126,7 +155,7 @@ function M.selBufNum(win, opt, count)
         local lines = api.nvim_buf_get_lines(0, 1, -1, true)
 
         for _, line in pairs(lines) do
-            local linebuf = line:split(" ", true)[4]
+            local linebuf = line:split(" ", true)[3]
             if tonumber(linebuf) == count then
                 buf = linebuf
                 break
@@ -135,7 +164,7 @@ function M.selBufNum(win, opt, count)
         -- Or if it's just an ENTER
     else
         local l = api.nvim_get_current_line()
-        buf = l:split(" ", true)[4]
+        buf = l:split(" ", true)[3]
     end
 
     M.close()
@@ -152,7 +181,7 @@ end
 -- Preview buffer
 function M.previewBuf()
     local l = api.nvim_get_current_line()
-    local buf = l:split(" ", true)[4]
+    local buf = l:split(" ", true)[3]
 
     -- Create the buffer for preview window
     M.prev_win = api.nvim_open_win(tonumber(buf), 1, M.preview_conf)
@@ -161,7 +190,7 @@ end
 -- Close buffer from line
 function M.closeBufNum(win)
     local l = api.nvim_get_current_line()
-    local buf = l:split(" ", true)[4]
+    local buf = l:split(" ", true)[3]
 
     local current_buf = api.nvim_win_get_buf(win)
     local jabs_buf = api.nvim_get_current_buf()
@@ -195,22 +224,13 @@ function M.parseLs(buf)
             si = si + 1
             -- Split with buffer information
             if si == 2 then
-                _, highlight = xpcall(function()
-                    return M.highlight[s]
-                end, function()
-                    return M.highlight[s:sub(1, s:len() - 1)]
-                end)
-
-                local _, symbol = xpcall(function()
-                    return M.bufinfo[s]
-                end, function()
-                    return M.bufinfo[s:sub(s:len(), s:len())]
-                end)
+                highlight = M.highlight[s] or M.highlight[s:sub(1, s:len() - 1)]
+                local symbol = M.bufinfo[s] or M.bufinfo[s:sub(1, s:len() - 1)]
 
                 -- Fixes #3
                 symbol = symbol or M.bufinfo["h"]
 
-                line = "· " .. symbol .. " " .. line
+                line = symbol .. " " .. line
                 -- Other non-empty splits (filename, RO, modified, ...)
             else
                 if s:sub(2, 8) == "term://" then
@@ -231,6 +251,25 @@ function M.parseLs(buf)
         -- Remove quotes from filename
         line = line:gsub('"', "")
 
+        -- Add devicon
+        local symbol = nil
+        local icon_hl_group = nil
+        if M.use_devicons then
+            local filename = line:split(" ", true)
+            filename = filename[#filename-1]
+            symbol, icon_hl_group = M.getFileSymbol(filename)
+
+            if not symbol then
+                if filename:match("Terminal") then
+                    symbol = M.bufinfo["R"]
+                else
+                    symbol = M.default_file
+                end
+            end
+
+            line = line:gsub(filename, symbol .. " " .. filename, 1)
+        end
+
         -- Truncate line if too long
         local filename_space = M.win_conf.width - (linenr:len() + 2) - 3
         if line:len() > filename_space then
@@ -239,9 +278,26 @@ function M.parseLs(buf)
 
         -- Write line
         api.nvim_buf_set_text(buf, i, 1, i, line:len(), { line })
-        api.nvim_buf_set_text(buf, i, M.win_conf.width - linenr:len() - 2, i, M.win_conf.width, { " " .. linenr })
 
+        -- Write line number
+        local linenr_text = " " .. linenr
+
+        -- Calculate offset caused by special characters (i.e. symbols)
+        local special_chars = string.gmatch(string.gsub(line:gsub("%p", ""), "%s", ""), "%W%W%W")
+        local offset = 0
+        for ch in special_chars do
+            offset = offset + ch:len() - 1
+        end
+
+        -- Add linenr at the end of line
+        api.nvim_buf_set_text(buf, i, M.win_conf.width + offset - linenr_text:len(), i, M.win_conf.width, { linenr_text })
+
+        -- Highlight line and icon
         api.nvim_buf_add_highlight(buf, -1, highlight, i, 0, -1)
+        if icon_hl_group then
+            local pos = line:find(symbol, 1, true)
+            api.nvim_buf_add_highlight(buf, -1, icon_hl_group, i, pos, pos + symbol:len())
+        end
     end
 end
 

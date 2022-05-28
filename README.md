@@ -13,6 +13,7 @@ JABS shows exactly what you would expect to see with `:buffers` or `:ls`, but in
 
 - Neovim ≥ v0.5
 - A patched [nerd font](https://www.nerdfonts.com/) for the buffer icons
+- [nvim-web-devicons](https://github.com/kyazdani42/nvim-web-devicons) for filetype icons (recommended)
 
 ## Installation
 
@@ -58,16 +59,12 @@ require 'jabs'.setup {
         border = 'single', -- none, single, double, rounded, solid, shadow, (or an array or chars). Default double
     },
 
-    -- Default highlights
+    -- Default highlights (must be a valid :highlight)
     highlight = {
-        current = "StatusLine",
-        split = "StatusLine",
-        alternate = "WarningMsg",
-        hidden = "ModeMsg",
-        locked  = nil,
-        read_only  = nil,
-        changed  = nil,
-        terminal  = nil,
+        current = "Title", -- default StatusLine
+        hidden = "StatusLineNC", -- default ModeMsg
+        split = "WarningMsg", -- default StatusLine
+        alternate = "StatusLine" -- default WarningMsg
     },
 
     -- Default symbols
@@ -79,10 +76,14 @@ require 'jabs'.setup {
         locked = "L", -- default 
         ro = "R", -- default 
         edited = "E", -- default 
-        terminal = "T" -- default 
+        terminal = "T", -- default 
+        default_file = "D", -- Filetype icon if not present in nvim-web-devicons. Default 
     },
 
-   	-- the options below are ignored when position = 'center'
+    -- Whether to use nvim-web-devicons next to filenames
+    use_devicons = false -- true or false. Default true
+
+   	-- The options below are ignored when position = 'center'
     col = ui.width,  -- Window appears on the right
     row = ui.height/2, -- Window appears in the vertical middle
 }
