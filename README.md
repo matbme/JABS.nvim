@@ -64,10 +64,6 @@ require 'jabs'.setup {
         split = "StatusLine",
         alternate = "WarningMsg",
         hidden = "ModeMsg",
-        locked  = nil,
-        read_only  = nil,
-        changed  = nil,
-        terminal  = nil,
     },
 
     -- Default symbols
