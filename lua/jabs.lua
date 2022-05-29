@@ -211,6 +211,11 @@ end
 
 -- Parse ls string
 function M.parseLs(buf)
+    -- Quit immediately if ls output is empty
+    if #M.bopen == 1 and M.bopen[1] == "" then
+        return
+    end
+
     for i, b in ipairs(M.bopen) do
         local si = 0 -- not empty split count
         local line = "" -- Line to be added to buffer
