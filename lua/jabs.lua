@@ -131,15 +131,15 @@ end
 
 -- Get file symbol from devicons
 function M.getFileSymbol(s)
-    local file = s:split('/', true)
+    local file = s:split("/", true)
     local filename = file[#file]
 
-    local ext = filename:split('.', true)
+    local ext = filename:split(".", true)
     ext = ext[#ext]
 
     local devicons = pcall(require, "nvim-web-devicons")
     if devicons then
-	    local icon, hl = require("nvim-web-devicons").get_icon(filename, ext)
+        local icon, hl = require("nvim-web-devicons").get_icon(filename, ext)
         return icon, hl
     else
         return nil, nil
@@ -261,11 +261,11 @@ function M.parseLs(buf)
         local icon_hl_group = nil
         if M.use_devicons then
             local filename = line:split(" ", true)
-            filename = filename[#filename-1]
+            filename = filename[#filename - 1]
             symbol, icon_hl_group = M.getFileSymbol(filename)
 
             if not symbol then
-                if filename:match("Terminal") then
+                if filename:match "Terminal" then
                     symbol = M.bufinfo["R"]
                 else
                     symbol = M.default_file
@@ -295,7 +295,14 @@ function M.parseLs(buf)
         end
 
         -- Add linenr at the end of line
-        api.nvim_buf_set_text(buf, i, M.win_conf.width + offset - linenr_text:len(), i, M.win_conf.width, { linenr_text })
+        api.nvim_buf_set_text(
+            buf,
+            i,
+            M.win_conf.width + offset - linenr_text:len(),
+            i,
+            M.win_conf.width,
+            { linenr_text }
+        )
 
         -- Highlight line and icon
         api.nvim_buf_add_highlight(buf, -1, highlight, i, 0, -1)
