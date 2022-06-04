@@ -229,6 +229,12 @@ function M.parseLs(buf)
             si = si + 1
             -- Split with buffer information
             if si == 2 then
+                -- If we're reading filename here, symbol is empty (prob. because of shada)
+                if s:sub(1,1) == '\"' then
+                    line = "   " .. line .. s .. " "
+                    goto continue
+                end
+
                 highlight = M.highlight[s] or M.highlight[s:sub(1, s:len() - 1)]
                 local symbol = M.bufinfo[s] or M.bufinfo[s:sub(1, s:len() - 1)]
 
@@ -295,10 +301,17 @@ function M.parseLs(buf)
         end
 
         -- Add linenr at the end of line
+        local start_col = 0
+        if offset - linenr_text:len() > 0 then
+            start_col = M.win_conf.width
+        else
+            start_col = M.win_conf.width + offset - linenr_text:len()
+        end
+
         api.nvim_buf_set_text(
             buf,
             i,
-            M.win_conf.width + offset - linenr_text:len(),
+            start_col,
             i,
             M.win_conf.width,
             { linenr_text }
