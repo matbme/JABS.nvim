@@ -48,6 +48,7 @@ function M.setup(c)
         ["#a"] = c.highlight.split or "StatusLine",
         ["a"] = c.highlight.split or "StatusLine",
         ["#h"] = c.highlight.alternate or "WarningMsg",
+        ["#"] = c.highlight.alternate or "WarningMsg",
         ["h"] = c.highlight.hidden or "ModeMsg",
     }
 
