@@ -231,7 +231,7 @@ function M.parseLs(buf)
             if si == 2 then
                 -- If we're reading filename here, symbol is empty (prob. because of shada)
                 if s:sub(1,1) == '\"' then
-                    line = "   " .. line .. s .. " "
+                    line = M.bufinfo["h"] .. " " .. line .. s .. " "
                     goto continue
                 end
 
