@@ -231,7 +231,7 @@ function M.parseLs(buf)
             -- Split with buffer information
             if si == 2 then
                 -- If we're reading filename here, symbol is empty (prob. because of shada)
-                if s:sub(1,1) == '\"' then
+                if s:sub(1, 1) == '"' then
                     line = M.bufinfo["h"] .. " " .. line .. s .. " "
                     goto continue
                 end
@@ -309,14 +309,7 @@ function M.parseLs(buf)
             start_col = M.win_conf.width + offset - linenr_text:len()
         end
 
-        api.nvim_buf_set_text(
-            buf,
-            i,
-            start_col,
-            i,
-            M.win_conf.width,
-            { linenr_text }
-        )
+        api.nvim_buf_set_text(buf, i, start_col, i, M.win_conf.width, { linenr_text })
 
         -- Highlight line and icon
         api.nvim_buf_add_highlight(buf, -1, highlight, i, 0, -1)
