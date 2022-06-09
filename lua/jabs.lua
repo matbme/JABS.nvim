@@ -279,7 +279,8 @@ function M.parseLs(buf)
                 end
             end
 
-            line = line:gsub(filename, symbol .. " " .. filename, 1)
+            local escaped_filename = filename:gsub("(%W)", "%%%1")
+            line = line:gsub(escaped_filename, symbol .. " " .. escaped_filename, 1)
         end
 
         -- Truncate line if too long
