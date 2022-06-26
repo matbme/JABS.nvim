@@ -425,6 +425,7 @@ function M.open()
     if not M.main_buf and not M.main_win then
         M.updatePos()
         M.main_buf = api.nvim_create_buf(false, true)
+        vim.bo[M.main_buf]["filetype"] = "JABSwindow"
         M.main_win = api.nvim_open_win(M.main_buf, 1, M.win_conf)
         if M.main_win ~= 0 then
             M.refresh(M.main_buf)
