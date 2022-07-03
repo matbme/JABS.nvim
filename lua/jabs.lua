@@ -15,6 +15,7 @@ M.bopen = {}
 M.conf = {}
 M.win_conf = {}
 M.preview_conf = {}
+M.keymap_conf = {}
 
 M.openOptions = {
     window = "b%s",
@@ -40,6 +41,11 @@ function M.setup(c)
     -- If symbol opts table not provided in config
     if not c.symbols then
         c.symbols = {}
+    end
+
+    -- If keymap opts table not provided in config
+    if not c.keymap then
+        c.keymap = {}
     end
 
     -- Highlight names
@@ -90,6 +96,15 @@ function M.setup(c)
         border = c.preview.border or "double",
         anchor = M.win_conf.anchor,
         relative = c.preview.relative or "win",
+    }
+
+    -- Keymap setup
+    M.keymap_conf = {
+        close = c.keymap.close or "D",
+        jump = c.keymap.jump or "<cr>",
+        h_split = c.keymap.h_split or "s",
+        v_split = c.keymap.v_split or "v",
+        preview = c.keymap.preview or "P",
     }
 
     -- Position setup
@@ -327,35 +342,35 @@ function M.setKeymaps(win, buf)
     api.nvim_buf_set_keymap(
         buf,
         "n",
-        "<CR>",
+        M.keymap_conf.jump,
         string.format([[:<C-U>lua require'jabs'.selBufNum(%s, 'window', vim.v.count)<CR>]], win),
         { nowait = true, noremap = true, silent = true }
     )
     api.nvim_buf_set_keymap(
         buf,
         "n",
-        "s",
+        M.keymap_conf.h_split,
         string.format([[:<C-U>lua require'jabs'.selBufNum(%s, 'hsplit', vim.v.count)<CR>]], win),
         { nowait = true, noremap = true, silent = true }
     )
     api.nvim_buf_set_keymap(
         buf,
         "n",
-        "v",
+        M.keymap_conf.v_split,
         string.format([[:<C-U>lua require'jabs'.selBufNum(%s, 'vsplit', vim.v.count)<CR>]], win),
         { nowait = true, noremap = true, silent = true }
     )
     api.nvim_buf_set_keymap(
         buf,
         "n",
-        "D",
+        M.keymap_conf.close,
         string.format([[:lua require'jabs'.closeBufNum(%s)<CR>]], win),
         { nowait = true, noremap = true, silent = true }
     )
     api.nvim_buf_set_keymap(
         buf,
         "n",
-        "P",
+        M.keymap_conf.preview,
         string.format([[:lua require'jabs'.previewBuf()<CR>]], win),
         { nowait = true, noremap = true, silent = true }
     )
