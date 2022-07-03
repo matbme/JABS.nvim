@@ -80,13 +80,13 @@ require 'jabs'.setup {
         default_file = "D", -- Filetype icon if not present in nvim-web-devicons. Default 
     },
 
-    -- Keymap
+    -- Keymaps
     keymap = {
-        close = "<c-d>", -- default D
-        jump = "<space>", -- default <cr>
-        h_split = "h", -- default s
-        v_split = "v", -- default v
-        preview = "p", -- default P
+        close = "<c-d>", -- Close buffer. Default D
+        jump = "<space>", -- Jump to buffer. Default <cr>
+        h_split = "h", -- Horizontally split buffer. Default s
+        v_split = "v", -- Vertically split buffer. Default v
+        preview = "p", -- Open buffer preview. Default P
     },
 
     -- Whether to use nvim-web-devicons next to filenames
@@ -125,6 +125,6 @@ JABS is in its infancy and there's still a lot to be done. Here's the currently 
 - [x] Close buffer with keymap (huge thanks to [@garymjr](https://github.com/garymjr))
 - [x] Open buffer in split
 - [ ] Sort modes (maybe visible and alternate on top)
-- [x] Custom keymaps
+- [x] Custom keymaps (thanks, [@MaxVerevkin](https://github.com/MaxVerevkin)
 
 Suggestions are always welcome 🙂!
