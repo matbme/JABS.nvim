@@ -48,6 +48,11 @@ function M.setup(c)
         c.keymap = {}
     end
 
+    -- If offset opts table not provided in config
+    if not c.offset then
+        c.offset = {}
+    end
+
     -- Highlight names
     M.highlight = {
         ["%a"] = c.highlight.current or "StatusLine",
@@ -110,6 +115,12 @@ function M.setup(c)
     -- Position setup
     M.conf = {
         position = c.position or "corner",
+
+        top_offset = c.offset.top or 0;
+        bottom_offset = c.offset.bottom or 0;
+        left_offset = c.offset.left or 0;
+        right_offset = c.offset.right or 0;
+
         preview_position = c.preview_position or "top",
     }
 
@@ -136,12 +147,12 @@ function M.updatePos()
     ui = api.nvim_list_uis()[1]
 
     if M.conf.position == "corner" then
-        M.win_conf.col = ui.width - M.win_conf.width
-        M.win_conf.row = ui.height - M.win_conf.height
+        M.win_conf.col = ui.width + M.conf.left_offset - (M.win_conf.width + M.conf.right_offset)
+        M.win_conf.row = ui.height + M.conf.top_offset - (M.win_conf.height + M.conf.bottom_offset)
     elseif M.conf.position == "center" then
         M.win_conf.relative = "win"
-        M.win_conf.col = (ui.width / 2) - (M.win_conf.width / 2)
-        M.win_conf.row = (ui.height / 2) - (M.win_conf.height / 2)
+        M.win_conf.col = (ui.width / 2) + M.conf.left_offset - (M.win_conf.width / 2 + M.conf.right_offset)
+        M.win_conf.row = (ui.height / 2) + M.conf.top_offset - (M.win_conf.height / 2 + M.conf.bottom_offset)
     end
 end
 

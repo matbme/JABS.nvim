@@ -51,6 +51,13 @@ require 'jabs'.setup {
     height = 20, -- default 10
     border = 'single', -- none, single, double, rounded, solid, shadow, (or an array or chars). Default shadow
 
+    offset = { -- window position offset
+        top = 2, -- default 0
+        bottom = 2, -- default 0
+        left = 2, -- default 0
+        right = 2, -- default 0
+    },
+
     -- Options for preview window
     preview_position = 'left', -- top, bottom, left, right. Default top
     preview = {
@@ -91,10 +98,6 @@ require 'jabs'.setup {
 
     -- Whether to use nvim-web-devicons next to filenames
     use_devicons = false -- true or false. Default true
-
-   	-- The options below are ignored when position = 'center'
-    col = ui.width,  -- Window appears on the right
-    row = ui.height/2, -- Window appears in the vertical middle
 }
 ```
 
