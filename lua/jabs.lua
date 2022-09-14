@@ -423,6 +423,16 @@ function M.close()
     end)
 end
 
+-- Set autocmds for JABS window
+function M.set_autocmds(buffer_nr, win_nr)
+    api.nvim_create_autocmd({"BufLeave"}, {
+        buffer = buffer_nr,
+        callback = function()
+            api.nvim_win_close(win_nr, 0)
+        end
+    })
+end
+
 function M.refresh(buf)
     local empty = {}
     for _ = 1, #M.bopen + 1 do
@@ -456,6 +466,7 @@ function M.open()
         if M.main_win ~= 0 then
             M.refresh(M.main_buf)
             M.setKeymaps(back_win, M.main_buf)
+            M.set_autocmds(M.main_buf, M.main_win)
         end
     else
         M.close()
