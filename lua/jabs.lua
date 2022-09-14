@@ -100,7 +100,7 @@ function M.setup(c)
         style = c.preview.style or "minimal",
         border = c.preview.border or "double",
         anchor = M.win_conf.anchor,
-        relative = c.preview.relative or "win",
+        relative = "win",
     }
 
     -- Keymap setup
@@ -128,15 +128,31 @@ function M.setup(c)
     if M.conf.preview_position == "top" then
         M.preview_conf.col = M.win_conf.width / 2 - M.preview_conf.width / 2
         M.preview_conf.row = -M.preview_conf.height - 2
+
+        if M.win_conf.border ~= "none" then
+            M.preview_conf.row = M.preview_conf.row - 1
+        end
     elseif M.conf.preview_position == "bottom" then
         M.preview_conf.col = M.win_conf.width / 2 - M.preview_conf.width / 2
         M.preview_conf.row = M.win_conf.height
+
+        if M.win_conf.border ~= "none" then
+            M.preview_conf.row = M.preview_conf.row + 1
+        end
     elseif M.conf.preview_position == "right" then
         M.preview_conf.col = M.win_conf.width
         M.preview_conf.row = M.win_conf.height / 2 - M.preview_conf.height / 2
+
+        if M.win_conf.border ~= "none" then
+            M.preview_conf.col = M.preview_conf.col + 1
+        end
     elseif M.conf.preview_position == "left" then
         M.preview_conf.col = -M.preview_conf.width
         M.preview_conf.row = M.win_conf.height / 2 - M.preview_conf.height / 2
+
+        if M.win_conf.border ~= "none" then
+            M.preview_conf.col = M.preview_conf.col - 1
+        end
     end
 
     M.updatePos()
@@ -211,7 +227,35 @@ function M.previewBuf()
     local buf = l:split(" ", true)[3]
 
     -- Create the buffer for preview window
-    M.prev_win = api.nvim_open_win(tonumber(buf), 1, M.preview_conf)
+    M.prev_win = api.nvim_open_win(tonumber(buf), false, vim.tbl_extend("force", M.preview_conf, {
+        win = M.main_win
+    }))
+    api.nvim_set_current_win(M.prev_win)
+
+    -- Close preview with "q"
+    api.nvim_buf_set_keymap(
+        tonumber(buf),
+        "n",
+        "q",
+        [[:lua require'jabs'.closePreviewBuf()<CR>]],
+        { nowait = true, noremap = true, silent = true }
+    )
+
+    -- Or close preview when cursor leaves window
+    api.nvim_create_autocmd({"WinLeave"}, {
+        group = "JABS",
+        callback = function()
+            M.closePreviewBuf()
+            return true
+        end,
+    })
+end
+
+function M.closePreviewBuf()
+    if M.prev_win then
+        api.nvim_win_close(M.prev_win, false)
+        M.prev_win = nil
+    end
 end
 
 -- Close buffer from line
@@ -421,14 +465,23 @@ function M.close()
         M.main_buf = nil
         M.open()
     end)
+
+    api.nvim_clear_autocmds({
+        group = "JABS"
+    })
 end
 
 -- Set autocmds for JABS window
-function M.set_autocmds(buffer_nr, win_nr)
-    api.nvim_create_autocmd({"BufLeave"}, {
-        buffer = buffer_nr,
+function M.set_autocmds()
+    api.nvim_create_augroup("JABS", { clear = true })
+
+    api.nvim_create_autocmd({"WinEnter"}, {
+        group = "JABS",
         callback = function()
-            api.nvim_win_close(win_nr, 0)
+            if api.nvim_get_current_win() ~= M.main_win and M.prev_win == nil then
+                M.close()
+                return true
+            end
         end
     })
 end
@@ -466,7 +519,7 @@ function M.open()
         if M.main_win ~= 0 then
             M.refresh(M.main_buf)
             M.setKeymaps(back_win, M.main_buf)
-            M.set_autocmds(M.main_buf, M.main_win)
+            M.set_autocmds()
         end
     else
         M.close()
