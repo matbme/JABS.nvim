@@ -116,10 +116,10 @@ function M.setup(c)
     M.conf = {
         position = c.position or "corner",
 
-        top_offset = c.offset.top or 0;
-        bottom_offset = c.offset.bottom or 0;
-        left_offset = c.offset.left or 0;
-        right_offset = c.offset.right or 0;
+        top_offset = c.offset.top or 0,
+        bottom_offset = c.offset.bottom or 0,
+        left_offset = c.offset.left or 0,
+        right_offset = c.offset.right or 0,
 
         preview_position = c.preview_position or "top",
     }
@@ -227,9 +227,13 @@ function M.previewBuf()
     local buf = l:split(" ", true)[3]
 
     -- Create the buffer for preview window
-    M.prev_win = api.nvim_open_win(tonumber(buf), false, vim.tbl_extend("force", M.preview_conf, {
-        win = M.main_win
-    }))
+    M.prev_win = api.nvim_open_win(
+        tonumber(buf),
+        false,
+        vim.tbl_extend("force", M.preview_conf, {
+            win = M.main_win,
+        })
+    )
     api.nvim_set_current_win(M.prev_win)
 
     -- Close preview with "q"
@@ -242,7 +246,7 @@ function M.previewBuf()
     )
 
     -- Or close preview when cursor leaves window
-    api.nvim_create_autocmd({"WinLeave"}, {
+    api.nvim_create_autocmd({ "WinLeave" }, {
         group = "JABS",
         callback = function()
             M.closePreviewBuf()
@@ -466,23 +470,23 @@ function M.close()
         M.open()
     end)
 
-    api.nvim_clear_autocmds({
-        group = "JABS"
-    })
+    api.nvim_clear_autocmds {
+        group = "JABS",
+    }
 end
 
 -- Set autocmds for JABS window
 function M.set_autocmds()
     api.nvim_create_augroup("JABS", { clear = true })
 
-    api.nvim_create_autocmd({"WinEnter"}, {
+    api.nvim_create_autocmd({ "WinEnter" }, {
         group = "JABS",
         callback = function()
             if api.nvim_get_current_win() ~= M.main_win and M.prev_win == nil then
                 M.close()
                 return true
             end
-        end
+        end,
     })
 end
 
