@@ -1,1 +1,1 @@
-command JABSOpen execute "lua require'jabs'.open()"
+command JABS execute "lua require'jabs'.open()"
