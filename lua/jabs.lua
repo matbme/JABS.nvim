@@ -23,7 +23,6 @@ M.openOptions = {
     hsplit = "sb %s",
 }
 
-require "split"
 
 function M.setup(c)
     local c = c or {}
