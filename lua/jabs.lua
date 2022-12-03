@@ -53,6 +53,8 @@ function M.setup(c)
         c.offset = {}
     end
 
+    M.sort_mru = c.sort_mru or false
+
     -- Highlight names
     M.highlight = {
         ["%a"] = c.highlight.current or "StatusLine",
@@ -334,28 +336,35 @@ end
 -- Parse ls string
 function M.parseLs(buf)
 
-    -- Quit immediately if ls output is empty
-    if #M.bopen == 1 and M.bopen[1] == "" then
-        return
-    end
-
     for i, ls_line in ipairs(M.bopen) do
         -- extract data from ls string
+        local match_cmd = '(%d+)%s+([^%s]*)%s+"(.*)"'
+        if not M.sort_mru then
+            match_cmd = match_cmd .. '%s*line%s(%d+)'
+        else
+            -- dummy so we get '' as result for linenr
+            match_cmd = match_cmd .. '(%d*)'
+        end
+
         local buffer_handle, flags, filename, linenr =
-            string.match(ls_line, '(%d+)%s+([^%s]*)%s+"(.*)"%s*line%s(%d+)')
+            string.match(ls_line, match_cmd)
 
         -- get symbol and icon
         local fn_symbol, fn_symbol_hl =
             M.use_devicons and getFileSymbol(filename) or '', nil
         local icon, icon_hl = getBufferIcon(flags)
 
-        -- format preList and postLine
-        local preLine = string.format(" %s %3d %s ", icon, buffer_handle, fn_symbol)
-        local postLine = string.format("  %3d ", linenr)
+        -- format preLine and postLine
+        local preLine =
+            string.format(" %s %3d %s ", icon, buffer_handle, fn_symbol)
+        local postLine = linenr ~= '' and string.format("  %3d ", linenr) or ''
 
         -- determine filename field length and format filename
-        local extra_width_glyphs = string.len("" .. fn_symbol .. icon) - 3
-        local filename_max_length = M.win_conf.width - #preLine - #postLine + extra_width_glyphs
+        local number_of_symbols = linenr ~= '' and 3 or 2
+        local symbols_only_str = string.gsub(preLine .. postLine, '[%s%d]', '')
+        local extra_width_symbols = symbols_only_str:len() - number_of_symbols
+        local filename_max_length =
+            M.win_conf.width - #preLine - #postLine + extra_width_symbols
         local filename_str = formatFilename(filename, filename_max_length)
 
         -- concat final line for the buffer
@@ -366,8 +375,11 @@ function M.parseLs(buf)
         api.nvim_buf_add_highlight(buf, -1, icon_hl, i, 0, -1)
         if fn_symbol_hl and fn_symbol ~= '' then
             local pos = line:find(fn_symbol, 1, true)
-            api.nvim_buf_add_highlight(buf, -1, fn_symbol_hl, i, pos, pos + fn_symbol:len())
+            api.nvim_buf_add_highlight(buf, -1, fn_symbol_hl, i, pos,
+                                       pos + fn_symbol:len())
         end
+
+        ::continue::
     end
 end
 
@@ -488,7 +500,14 @@ end
 
 -- Floating buffer list
 function M.open()
-    M.bopen = api.nvim_exec(":ls", true):split("\n", true)
+    local ls_result = api.nvim_exec(M.sort_mru and ":ls t" or ":ls", true)
+    M.bopen = iter2array(string.gmatch(ls_result, "([^\n]+)"))
+
+    if #M.bopen == 0 then
+        print("No buffer in list....")
+        return
+    end
+
     local back_win = api.nvim_get_current_win()
     -- Create the buffer for the window
     if not M.main_buf and not M.main_win then
