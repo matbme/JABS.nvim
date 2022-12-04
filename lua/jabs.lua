@@ -78,7 +78,7 @@ function M.setup(c)
     }
 
     -- Use devicons file symbols
-    M.use_devicons = c.use_devicons or true
+    M.use_devicons = not (c.use_devicons == false)
 
     -- Fallback file symbol for devicon
     M.default_file = c.symbols.default_file or ""
