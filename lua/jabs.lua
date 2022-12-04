@@ -370,8 +370,10 @@ function M.parseLs(buf)
             string.match(ls_line, match_cmd)
 
         -- get symbol and icon
-        local fn_symbol, fn_symbol_hl =
-            M.use_devicons and getFileSymbol(filename) or '', nil
+        local fn_symbol, fn_symbol_hl = '', nil
+        if M.use_devicons then
+            fn_symbol, fn_symbol_hl = getFileSymbol(filename)
+        end
         local icon, icon_hl = getBufferIcon(flags)
 
         -- format preLine and postLine
@@ -379,12 +381,14 @@ function M.parseLs(buf)
             string.format(" %s %3d %s ", icon, buffer_handle, fn_symbol)
         local postLine = linenr ~= '' and string.format("  %3d ", linenr) or ''
 
+        -- some symbols magic, they increase the string.len by more
+        -- than 1 and this is a magic trick to get the extra width
+        local extra_width = #preLine + #postLine -
+            #string.gsub(preLine .. postLine, '[\128-\191]', '')
+
         -- determine filename field length and format filename
-        local number_of_symbols = linenr ~= '' and 3 or 2
-        local symbols_only_str = string.gsub(preLine .. postLine, '[%s%d]', '')
-        local extra_width_symbols = symbols_only_str:len() - number_of_symbols
         local filename_max_length =
-            M.win_conf.width - #preLine - #postLine + extra_width_symbols
+            M.win_conf.width - #preLine - #postLine + extra_width
         local filename_str = formatFilename(filename, filename_max_length)
 
         -- concat final line for the buffer
