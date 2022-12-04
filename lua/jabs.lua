@@ -1,8 +1,6 @@
 local M = {}
 local api = vim.api
 
-local ui = api.nvim_list_uis()[1]
-
 -- JABS main popup
 M.main_win = nil
 M.main_buf = nil
@@ -83,10 +81,15 @@ function M.setup(c)
     -- Fallback file symbol for devicon
     M.default_file = c.symbols.default_file or ""
 
+    -- default width and height of the popup window
+    M.default_width = c.width or 50
+    M.default_height = c.height or 10
+    M.clip_popup_size = not (c.clip_popup_size == false)
+
     -- Main window setup
     M.win_conf = {
-        width = c.width or 50,
-        height = c.height or 10,
+        width = M.default_width,
+        height = M.default_height,
         style = c.style or "minimal",
         border = c.border or "shadow",
         anchor = "NW",
@@ -112,9 +115,16 @@ function M.setup(c)
         preview = c.keymap.preview or "P",
     }
 
+    -- position backwards compatibility
+    if c.position == 'center' then
+        c.position = {'center', 'center'}
+    elseif c.position == 'corner' then
+        c.position = {'right', 'bottom'}
+    end
+
     -- Position setup
     M.conf = {
-        position = c.position or "corner",
+        position = c.position or {'right', 'bottom'},
 
         top_offset = c.offset.top or 0,
         bottom_offset = c.offset.bottom or 0,
@@ -154,22 +164,67 @@ function M.setup(c)
             M.preview_conf.col = M.preview_conf.col - 1
         end
     end
-
-    M.updatePos()
 end
 
 -- Update window position
 function M.updatePos()
-    ui = api.nvim_list_uis()[1]
+    assert(type(M.conf.position) == 'table')
+    assert(#M.conf.position == 2)
+    local position_x, position_y = unpack(M.conf.position)
+    local relative = M.win_conf.relative
 
-    if M.conf.position == "corner" then
-        M.win_conf.col = ui.width + M.conf.left_offset - (M.win_conf.width + M.conf.right_offset)
-        M.win_conf.row = ui.height + M.conf.top_offset - (M.win_conf.height + M.conf.bottom_offset)
-    elseif M.conf.position == "center" then
-        M.win_conf.relative = "win"
-        M.win_conf.col = (ui.width / 2) + M.conf.left_offset - (M.win_conf.width / 2 + M.conf.right_offset)
-        M.win_conf.row = (ui.height / 2) + M.conf.top_offset - (M.win_conf.height / 2 + M.conf.bottom_offset)
+    -- determine max width and height
+    local max_width, max_height
+    if relative == 'win' then
+        max_width = api.nvim_win_get_width(0)
+        max_height = api.nvim_win_get_height(0)
+    elseif relative == 'editor' or relative == 'cursor' then
+        local ui = api.nvim_list_uis()[1]
+        max_width = ui.width
+        max_height = ui.height
+    else assert(false)
     end
+
+    -- clip size if neccessary
+    local size_x, size_y = M.default_width, M.default_height
+    if M.clip_popup_size then
+        size_x = size_x > max_width and max_width or M.default_width
+        size_y = size_y > max_height and max_height or M.default_height
+    end
+
+    local pos_x, pos_y
+    if relative == 'cursor' then
+        -- calculate position x
+            if position_x == 'center' then pos_x = -size_x / 2
+        elseif position_x == 'right'  then pos_x = 0 + M.conf.left_offset
+        elseif position_x == 'left'   then pos_x = -size_x - M.conf.right_offset
+        else assert(false)
+        end
+        -- calculate position y
+            if position_y == 'center' then pos_y = -size_y / 2
+        elseif position_y == 'bottom' then pos_y = 0 + M.conf.top_offset
+        elseif position_y == 'top'    then pos_y = -size_y - M.conf.bottom_offset
+        else assert(false)
+        end
+    else
+        -- calculate position x
+            if position_x == 'center' then pos_x = max_width / 2 - size_x / 2
+        elseif position_x == 'right'  then pos_x = max_width - size_x - M.conf.right_offset
+        elseif position_x == 'left'   then pos_x = 0 + M.conf.left_offset
+        else assert(false)
+        end
+
+        -- calculate position y
+            if position_y == 'center' then pos_y = max_height / 2 - size_y / 2
+        elseif position_y == 'bottom' then pos_y = max_height - size_y - M.conf.bottom_offset
+        elseif position_y == 'top'    then pos_y = 0 + M.conf.top_offset
+        end
+    end
+
+    M.win_conf.row = pos_y
+    M.win_conf.col = pos_x
+    M.win_conf.width = size_x
+    M.win_conf.height = size_y
 end
 
 -- Get file symbol from devicons
