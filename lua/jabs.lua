@@ -189,11 +189,7 @@ local function getFileSymbol(filename)
 
     local symbol, hl = require("nvim-web-devicons").get_icon(filename, ext)
     if not symbol then
-        if string.match(filename, "^Terminal") then
-            symbol = M.bufinfo['R']
-        else
-            symbol = M.default_file
-        end
+        symbol = M.default_file
     end
 
     return symbol, hl
@@ -204,26 +200,27 @@ local function getBufferIcon(flags)
 
     -- if flags do not end with a or h extract trailing char (-> -, =, +, R, F)
     local iconFlag = string.match(flags, "([^ah])$")
-    iconFlag = iconFlag and iconFlag or flags
+    iconFlag = iconFlag or flags
 
     -- extract '#' or '.*[ah]'
-    local hlFlag = string.match(flags, "(.*[ah#])")
-    hlFlag = hlFlag and hlFlag or flags
+    local hlFlag = string.match(flags, "(.[ah#])")
+    hlFlag = hlFlag or flags
 
     return M.bufinfo[iconFlag], M.highlight[hlFlag]
 end
 
 local function formatFilename(filename, filename_max_length)
     local function trunc_filename(fn, fn_max)
-        if string.len(fn) > fn_max then
-            local substr_length = fn_max - string.len("...")
-            if substr_length >= 0 then
-                fn = "..." .. string.sub(fn, -substr_length)
-            else
-                fn = string.rep('.', fn_max)
-            end
+        if string.len(fn) <= fn_max then
+            return fn
         end
-        return fn
+
+        local substr_length = fn_max - string.len("...")
+        if substr_length <= 0 then
+            return string.rep('.', fn_max)
+        end
+
+        return "..." .. string.sub(fn, -substr_length)
     end
 
     local function split_filename(fn)
@@ -397,12 +394,11 @@ function M.parseLs(buf)
         api.nvim_buf_set_lines(buf, i, i+1, true, { line })
         api.nvim_buf_add_highlight(buf, -1, icon_hl, i, 0, -1)
         if fn_symbol_hl and fn_symbol ~= '' then
-            local pos = line:find(fn_symbol, 1, true)
+            local pos = string.find(line, fn_symbol, 1, true)
             api.nvim_buf_add_highlight(buf, -1, fn_symbol_hl, i, pos,
-                                       pos + fn_symbol:len())
+                                       pos + string.len(fn_symbol))
         end
 
-        ::continue::
     end
 end
 
