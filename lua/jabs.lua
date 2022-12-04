@@ -457,22 +457,21 @@ function M.setKeymaps(win, buf)
 end
 
 function M.close()
-    -- If JABS is closed using :q the window and buffer indicator variables
-    -- are not reset, so we need to take this into account
-    xpcall(function()
-        api.nvim_win_close(M.main_win, false)
-        api.nvim_buf_delete(M.main_buf, {})
-        M.main_win = nil
-        M.main_buf = nil
-    end, function()
-        M.main_win = nil
-        M.main_buf = nil
-        M.open()
-    end)
-
     api.nvim_clear_autocmds {
         group = "JABS",
     }
+
+    -- If JABS is closed using :q the window and buffer indicator variables
+    -- are not reset, so we need to take this into account
+    -- if that's the case, the win is already closed and the M.main_win is
+    -- invalid but does not equeal nvim_get_current_win anymore.
+    if api.nvim_get_current_win () == M.main_win then
+        api.nvim_win_close(M.main_win, false)
+    end
+    api.nvim_buf_delete(M.main_buf, {})
+    M.main_win = nil
+    M.main_buf = nil
+
 end
 
 -- Set autocmds for JABS window
