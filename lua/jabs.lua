@@ -182,7 +182,7 @@ end
 local function getFileSymbol(filename)
     local devicons = pcall(require, "nvim-web-devicons")
     if not devicons then
-        return nil, nil
+        return '', nil
     end
 
     local ext =  string.match(filename, "%.(.*)$")
