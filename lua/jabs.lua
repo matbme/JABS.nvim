@@ -53,6 +53,8 @@ function M.setup(c)
     end
 
     M.sort_mru = c.sort_mru or false
+    M.split_filename = c.split_filename or false
+    M.split_filename_path_width = c.split_filename_path_width or 0
 
     -- Highlight names
     M.highlight = {
@@ -212,11 +214,33 @@ local function getBufferIcon(flags)
 end
 
 local function formatFilename(filename, filename_max_length)
+    local function trunc_filename(fn, fn_max)
+        if string.len(fn) > fn_max then
+            local substr_length = fn_max - string.len("...")
+            if substr_length >= 0 then
+                fn = "..." .. string.sub(fn, -substr_length)
+            else
+                fn = string.rep('.', fn_max)
+            end
+        end
+        return fn
+    end
+
+    local function split_filename(fn)
+        return string.match(fn, "(.-)([^\\/]-%.?[^%.\\/]*)$")
+    end
+
     filename = string.gsub(filename, "term://", "Terminal: ", 1)
 
-    if string.len(filename) > filename_max_length then
-        local substr_length = filename_max_length - string.len("...")
-        filename = "..." .. string.sub(filename, -substr_length)
+    if M.split_filename then
+        local path, file = split_filename(filename)
+        local path_width = M.split_filename_path_width
+        local file_width = filename_max_length - M.split_filename_path_width
+        filename = string.format('%-' .. file_width .. "s%-" .. path_width .. "s",
+                    trunc_filename(file, file_width),
+                    trunc_filename(path, path_width))
+    else
+        filename = trunc_filename(filename, filename_max_length)
     end
 
     return string.format("%-" .. filename_max_length .. "s", filename)
