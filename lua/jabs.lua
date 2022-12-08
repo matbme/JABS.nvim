@@ -116,15 +116,15 @@ function M.setup(c)
     }
 
     -- position backwards compatibility
-    if c.position == 'center' then
-        c.position = {'center', 'center'}
-    elseif c.position == 'corner' then
-        c.position = {'right', 'bottom'}
+    if c.position == "center" then
+        c.position = { "center", "center" }
+    elseif c.position == "corner" then
+        c.position = { "right", "bottom" }
     end
 
     -- Position setup
     M.conf = {
-        position = c.position or {'right', 'bottom'},
+        position = c.position or { "right", "bottom" },
 
         top_offset = c.offset.top or 0,
         bottom_offset = c.offset.bottom or 0,
@@ -168,21 +168,22 @@ end
 
 -- Update window position
 function M.updatePos()
-    assert(type(M.conf.position) == 'table')
+    assert(type(M.conf.position) == "table")
     assert(#M.conf.position == 2)
     local position_x, position_y = unpack(M.conf.position)
     local relative = M.win_conf.relative
 
     -- determine max width and height
     local max_width, max_height
-    if relative == 'win' then
+    if relative == "win" then
         max_width = api.nvim_win_get_width(0)
         max_height = api.nvim_win_get_height(0)
-    elseif relative == 'editor' or relative == 'cursor' then
+    elseif relative == "editor" or relative == "cursor" then
         local ui = api.nvim_list_uis()[1]
         max_width = ui.width
         max_height = ui.height
-    else assert(false)
+    else
+        assert(false)
     end
 
     -- clip size if neccessary
@@ -193,31 +194,46 @@ function M.updatePos()
     end
 
     local pos_x, pos_y
-    if relative == 'cursor' then
+    if relative == "cursor" then
         -- calculate position x
-            if position_x == 'center' then pos_x = -size_x / 2
-        elseif position_x == 'right'  then pos_x = 0 + M.conf.left_offset
-        elseif position_x == 'left'   then pos_x = -size_x - M.conf.right_offset
-        else assert(false)
+        if position_x == "center" then
+            pos_x = -size_x / 2
+        elseif position_x == "right" then
+            pos_x = 0 + M.conf.left_offset
+        elseif position_x == "left" then
+            pos_x = -size_x - M.conf.right_offset
+        else
+            assert(false)
         end
         -- calculate position y
-            if position_y == 'center' then pos_y = -size_y / 2
-        elseif position_y == 'bottom' then pos_y = 0 + M.conf.top_offset
-        elseif position_y == 'top'    then pos_y = -size_y - M.conf.bottom_offset
-        else assert(false)
+        if position_y == "center" then
+            pos_y = -size_y / 2
+        elseif position_y == "bottom" then
+            pos_y = 0 + M.conf.top_offset
+        elseif position_y == "top" then
+            pos_y = -size_y - M.conf.bottom_offset
+        else
+            assert(false)
         end
     else
         -- calculate position x
-            if position_x == 'center' then pos_x = max_width / 2 - size_x / 2
-        elseif position_x == 'right'  then pos_x = max_width - size_x - M.conf.right_offset
-        elseif position_x == 'left'   then pos_x = 0 + M.conf.left_offset
-        else assert(false)
+        if position_x == "center" then
+            pos_x = max_width / 2 - size_x / 2
+        elseif position_x == "right" then
+            pos_x = max_width - size_x - M.conf.right_offset
+        elseif position_x == "left" then
+            pos_x = 0 + M.conf.left_offset
+        else
+            assert(false)
         end
 
         -- calculate position y
-            if position_y == 'center' then pos_y = max_height / 2 - size_y / 2
-        elseif position_y == 'bottom' then pos_y = max_height - size_y - M.conf.bottom_offset
-        elseif position_y == 'top'    then pos_y = 0 + M.conf.top_offset
+        if position_y == "center" then
+            pos_y = max_height / 2 - size_y / 2
+        elseif position_y == "bottom" then
+            pos_y = max_height - size_y - M.conf.bottom_offset
+        elseif position_y == "top" then
+            pos_y = 0 + M.conf.top_offset
         end
     end
 
