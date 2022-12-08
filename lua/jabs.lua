@@ -478,6 +478,7 @@ function M.close()
         api.nvim_win_close(M.main_win, false)
     end
     api.nvim_buf_delete(M.main_buf, {})
+    api.nvim_set_current_win(M.back_win)
     M.main_win = nil
     M.main_buf = nil
 end
@@ -527,7 +528,7 @@ function M.open()
         return
     end
 
-    local back_win = api.nvim_get_current_win()
+    M.back_win = api.nvim_get_current_win()
     -- Create the buffer for the window
     if not M.main_buf and not M.main_win then
         M.updatePos()
@@ -536,7 +537,7 @@ function M.open()
         M.main_win = api.nvim_open_win(M.main_buf, 1, M.win_conf)
         if M.main_win ~= 0 then
             M.refresh(M.main_buf)
-            M.setKeymaps(back_win, M.main_buf)
+            M.setKeymaps(M.back_win, M.main_buf)
             M.set_autocmds()
         end
     else
