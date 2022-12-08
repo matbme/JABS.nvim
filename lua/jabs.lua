@@ -23,8 +23,6 @@ M.openOptions = {
     hsplit = "sb %s",
 }
 
-require "split"
-
 function M.setup(c)
     local c = c or {}
 
@@ -52,6 +50,10 @@ function M.setup(c)
     if not c.offset then
         c.offset = {}
     end
+
+    M.sort_mru = c.sort_mru or false
+    M.split_filename = c.split_filename or false
+    M.split_filename_path_width = c.split_filename_path_width or 0
 
     -- Highlight names
     M.highlight = {
@@ -158,6 +160,100 @@ function M.setup(c)
     M.updatePos()
 end
 
+--[[*******************************************************
+    ******************** BEGIN UTILS **********************
+    *******************************************************]]
+--
+
+local function iter2array(...)
+    local arr = {}
+    for v in ... do
+        arr[#arr + 1] = v
+    end
+    return arr
+end
+
+local function getBufferHandleFromLine(line)
+    local handle = iter2array(string.gmatch(line, "[^%s]+"))[2]
+    return assert(tonumber(handle))
+end
+
+-- Get file symbol from devicons
+local function getFileSymbol(filename)
+    local devicons = pcall(require, "nvim-web-devicons")
+    if not devicons then
+        return "", nil
+    end
+
+    local ext = filename
+    while string.match(ext, "%.(.*)$") do
+        ext = string.match(ext, "%.(.*)$")
+    end
+
+    print(ext)
+    local symbol, hl = require("nvim-web-devicons").get_icon(filename, ext)
+    if not symbol then
+        symbol = M.default_file
+    end
+
+    return symbol, hl
+end
+
+local function getBufferIcon(flags)
+    flags = flags ~= "" and flags or "h"
+
+    -- if flags do not end with a or h extract trailing char (-> -, =, +, R, F)
+    local iconFlag = string.match(flags, "([^ah])$")
+    iconFlag = iconFlag or flags
+
+    -- extract '#' or '.*[ah]'
+    local hlFlag = string.match(flags, "(.[ah#])")
+    hlFlag = hlFlag or flags
+
+    return M.bufinfo[iconFlag], M.highlight[hlFlag]
+end
+
+local function formatFilename(filename, filename_max_length)
+    local function trunc_filename(fn, fn_max)
+        if string.len(fn) <= fn_max then
+            return fn
+        end
+
+        local substr_length = fn_max - string.len "..."
+        if substr_length <= 0 then
+            return string.rep(".", fn_max)
+        end
+
+        return "..." .. string.sub(fn, -substr_length)
+    end
+
+    local function split_filename(fn)
+        return string.match(fn, "(.-)([^\\/]-%.?[^%.\\/]*)$")
+    end
+
+    filename = string.gsub(filename, "term://", "Terminal: ", 1)
+
+    if M.split_filename then
+        local path, file = split_filename(filename)
+        local path_width = M.split_filename_path_width
+        local file_width = filename_max_length - M.split_filename_path_width
+        filename = string.format(
+            "%-" .. file_width .. "s%-" .. path_width .. "s",
+            trunc_filename(file, file_width),
+            trunc_filename(path, path_width)
+        )
+    else
+        filename = trunc_filename(filename, filename_max_length)
+    end
+
+    return string.format("%-" .. filename_max_length .. "s", filename)
+end
+
+--[[*****************************************************
+    ******************** END UTILS **********************
+    *****************************************************]]
+--
+
 -- Update window position
 function M.updatePos()
     ui = api.nvim_list_uis()[1]
@@ -172,23 +268,6 @@ function M.updatePos()
     end
 end
 
--- Get file symbol from devicons
-function M.getFileSymbol(s)
-    local file = s:split("/", true)
-    local filename = file[#file]
-
-    local ext = filename:split(".", true)
-    ext = ext[#ext]
-
-    local devicons = pcall(require, "nvim-web-devicons")
-    if devicons then
-        local icon, hl = require("nvim-web-devicons").get_icon(filename, ext)
-        return icon, hl
-    else
-        return nil, nil
-    end
-end
-
 -- Open buffer from line
 function M.selBufNum(win, opt, count)
     local buf = nil
@@ -198,16 +277,15 @@ function M.selBufNum(win, opt, count)
         local lines = api.nvim_buf_get_lines(0, 1, -1, true)
 
         for _, line in pairs(lines) do
-            local linebuf = line:split(" ", true)[3]
-            if tonumber(linebuf) == count then
-                buf = linebuf
+            local buffer_handle = getBufferHandleFromLine(line)
+            if buffer_handle == count then
+                buf = buffer_handle
                 break
             end
         end
         -- Or if it's just an ENTER
     else
-        local l = api.nvim_get_current_line()
-        buf = l:split(" ", true)[3]
+        buf = getBufferHandleFromLine(api.nvim_get_current_line())
     end
 
     M.close()
@@ -223,12 +301,11 @@ end
 
 -- Preview buffer
 function M.previewBuf()
-    local l = api.nvim_get_current_line()
-    local buf = l:split(" ", true)[3]
+    local buf = getBufferHandleFromLine(vim.api.nvim_get_current_line())
 
     -- Create the buffer for preview window
     M.prev_win = api.nvim_open_win(
-        tonumber(buf),
+        buf,
         false,
         vim.tbl_extend("force", M.preview_conf, {
             win = M.main_win,
@@ -238,7 +315,7 @@ function M.previewBuf()
 
     -- Close preview with "q"
     api.nvim_buf_set_keymap(
-        tonumber(buf),
+        buf,
         "n",
         "q",
         [[:lua require'jabs'.closePreviewBuf()<CR>]],
@@ -264,13 +341,12 @@ end
 
 -- Close buffer from line
 function M.closeBufNum(win)
-    local l = api.nvim_get_current_line()
-    local buf = l:split(" ", true)[3]
+    local buf = getBufferHandleFromLine(api.nvim_get_current_line())
 
     local current_buf = api.nvim_win_get_buf(win)
     local jabs_buf = api.nvim_get_current_buf()
 
-    if tonumber(buf) ~= current_buf then
+    if buf ~= current_buf then
         vim.cmd(string.format("bd %s", buf))
         local ln = api.nvim_win_get_cursor(0)[1]
         table.remove(M.bopen, ln - 1)
@@ -286,111 +362,48 @@ end
 
 -- Parse ls string
 function M.parseLs(buf)
-    -- Quit immediately if ls output is empty
-    if #M.bopen == 1 and M.bopen[1] == "" then
-        return
-    end
-
-    for i, b in ipairs(M.bopen) do
-        local si = 0 -- not empty split count
-        local line = "" -- Line to be added to buffer
-        local highlight = "" -- Line highlight group
-        local linenr = "" -- Buffer line number
-
-        for _, s in ipairs(b:split(" ", true)) do
-            if s:len() == 0 then
-                goto continue
-            end
-            si = si + 1
-            -- Split with buffer information
-            if si == 2 then
-                -- If we're reading filename here, symbol is empty (prob. because of shada)
-                if s:sub(1, 1) == '"' then
-                    line = M.bufinfo["h"] .. " " .. line .. s .. " "
-                    goto continue
-                end
-
-                highlight = M.highlight[s] or M.highlight[s:sub(1, s:len() - 1)]
-                local symbol = M.bufinfo[s] or M.bufinfo[s:sub(1, s:len() - 1)]
-
-                -- Fixes #3
-                symbol = symbol or M.bufinfo["h"]
-
-                line = symbol .. " " .. line
-                -- Other non-empty splits (filename, RO, modified, ...)
-            else
-                if s:sub(2, 8) == "term://" then
-                    line = line .. "Terminal" .. s:gsub("^.*:", ': "')
-                else
-                    if tonumber(s) ~= nil and si > 2 then
-                        linenr = s
-                    else
-                        if s:sub(1, 4) ~= "line" and s ~= "" then
-                            line = line .. (M.bufinfo[s] or s) .. " "
-                        end
-                    end
-                end
-            end
-            ::continue::
-        end
-
-        -- Remove quotes from filename
-        line = line:gsub('"', "")
-
-        -- Add devicon
-        local symbol = nil
-        local icon_hl_group = nil
-        if M.use_devicons then
-            local filename = line:split(" ", true)
-            filename = filename[#filename - 1]
-            symbol, icon_hl_group = M.getFileSymbol(filename)
-
-            if not symbol then
-                if filename:match "Terminal" then
-                    symbol = M.bufinfo["R"]
-                else
-                    symbol = M.default_file
-                end
-            end
-
-            local escaped_filename = filename:gsub("(%W)", "%%%1")
-            line = line:gsub(escaped_filename, symbol .. " " .. escaped_filename, 1)
-        end
-
-        -- Truncate line if too long
-        local filename_space = M.win_conf.width - (linenr:len() + 2) - 3
-        if line:len() > filename_space then
-            line = line:gsub(string.rep("%S", line:len() - filename_space + 3), "...", 1)
-        end
-
-        -- Write line
-        api.nvim_buf_set_text(buf, i, 1, i, line:len(), { line })
-
-        -- Write line number
-        local linenr_text = " " .. linenr
-
-        -- Calculate offset caused by special characters (i.e. symbols)
-        local special_chars = string.gmatch(string.gsub(line:gsub("%p", ""), "%s", ""), "%W%W%W")
-        local offset = 0
-        for ch in special_chars do
-            offset = offset + ch:len() - 1
-        end
-
-        -- Add linenr at the end of line
-        local start_col = 0
-        if offset - linenr_text:len() > 0 then
-            start_col = M.win_conf.width
+    for i, ls_line in ipairs(M.bopen) do
+        -- extract data from ls string
+        local match_cmd = '(%d+)%s+([^%s]*)%s+([^%s]?)%s+"(.*)"'
+        if not M.sort_mru then
+            match_cmd = match_cmd .. "%s*line%s(%d+)"
         else
-            start_col = M.win_conf.width + offset - linenr_text:len()
+            -- dummy so we get '' as result for linenr
+            match_cmd = match_cmd .. "(%d*)"
         end
 
-        api.nvim_buf_set_text(buf, i, start_col, i, M.win_conf.width, { linenr_text })
+        local buffer_handle, flags, modified, filename, linenr = string.match(ls_line, match_cmd)
 
-        -- Highlight line and icon
-        api.nvim_buf_add_highlight(buf, -1, highlight, i, 0, -1)
-        if icon_hl_group then
-            local pos = line:find(symbol, 1, true)
-            api.nvim_buf_add_highlight(buf, -1, icon_hl_group, i, pos, pos + symbol:len())
+        -- get symbol and icon
+        local fn_symbol, fn_symbol_hl = "", nil
+        if M.use_devicons then
+            fn_symbol, fn_symbol_hl = getFileSymbol(filename)
+        end
+        local icon, icon_hl = getBufferIcon(flags)
+
+        local modified_icon = M.bufinfo[modified] or " "
+
+        -- format preLine and postLine
+        local preLine = string.format("%s %3d %s %s ", icon, buffer_handle, modified_icon, fn_symbol)
+        local postLine = linenr ~= "" and string.format("  %3d ", linenr) or ""
+
+        -- some symbols magic, they increase the string.len by more
+        -- than 1 and this is a magic trick to get the extra width
+        local extra_width = #preLine + #postLine - #string.gsub(preLine .. postLine, "[\128-\191]", "")
+
+        -- determine filename field length and format filename
+        local filename_max_length = M.win_conf.width - #preLine - #postLine + extra_width
+        local filename_str = formatFilename(filename, filename_max_length)
+
+        -- concat final line for the buffer
+        local line = preLine .. filename_str .. postLine
+
+        -- set line and highligh
+        api.nvim_buf_set_lines(buf, i, i + 1, true, { line })
+        api.nvim_buf_add_highlight(buf, -1, icon_hl, i, 0, -1)
+        if fn_symbol_hl and fn_symbol ~= "" then
+            local pos = string.find(line, fn_symbol, 1, true)
+            api.nvim_buf_add_highlight(buf, -1, fn_symbol_hl, i, pos, pos + string.len(fn_symbol))
         end
     end
 end
@@ -512,7 +525,14 @@ end
 
 -- Floating buffer list
 function M.open()
-    M.bopen = api.nvim_exec(":ls", true):split("\n", true)
+    local ls_result = api.nvim_exec(M.sort_mru and ":ls t" or ":ls", true)
+    M.bopen = iter2array(string.gmatch(ls_result, "([^\n]+)"))
+
+    if #M.bopen == 0 then
+        print "No buffer in list...."
+        return
+    end
+
     local back_win = api.nvim_get_current_win()
     -- Create the buffer for the window
     if not M.main_buf and not M.main_win then
