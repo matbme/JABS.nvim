@@ -50,6 +50,7 @@ require 'jabs'.setup {
                                   --                                             <position_y> top, center, bottom
                                   -- Default {'right', 'bottom'}
     relative = 'editor', -- win, editor, cursor. Default win
+    clip_popup_size = false, -- clips the popup size to the win (or editor) size. Default true
 
     width = 80, -- default 50
     height = 20, -- default 10
