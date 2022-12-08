@@ -185,10 +185,7 @@ local function getFileSymbol(filename)
         return "", nil
     end
 
-    local ext = filename
-    while string.match(ext, "%.(.*)$") do
-        ext = string.match(ext, "%.(.*)$")
-    end
+    local ext =  string.match(filename, '%.([^%.]*)$')
 
     local symbol, hl = require("nvim-web-devicons").get_icon(filename, ext)
     if not symbol then

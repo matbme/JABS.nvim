@@ -60,7 +60,7 @@ require 'jabs'.setup {
 
     sort_mru = true -- Sort buffers by most recently used (true or false). Default false
     split_filename = true -- Split filename into separate components for name and path. Default false
-    split_filename_path_width = 1 -- If split_filename is true, how many components to show. Default 0.
+    split_filename_path_width = 20 -- If split_filename is true, how wide the column for the path is supposed to be, Default 0 (don't show path)
 
     -- Options for preview window
     preview_position = 'left', -- top, bottom, left, right. Default top
