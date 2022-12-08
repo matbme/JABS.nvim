@@ -190,7 +190,6 @@ local function getFileSymbol(filename)
         ext = string.match(ext, "%.(.*)$")
     end
 
-    print(ext)
     local symbol, hl = require("nvim-web-devicons").get_icon(filename, ext)
     if not symbol then
         symbol = M.default_file
