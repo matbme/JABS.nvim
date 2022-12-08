@@ -23,7 +23,6 @@ M.openOptions = {
     hsplit = "sb %s",
 }
 
-
 function M.setup(c)
     local c = c or {}
 
@@ -163,7 +162,8 @@ end
 
 --[[*******************************************************
     ******************** BEGIN UTILS **********************
-    *******************************************************]]--
+    *******************************************************]]
+--
 
 local function iter2array(...)
     local arr = {}
@@ -182,10 +182,10 @@ end
 local function getFileSymbol(filename)
     local devicons = pcall(require, "nvim-web-devicons")
     if not devicons then
-        return '', nil
+        return "", nil
     end
 
-    local ext =  string.match(filename, "%.(.*)$")
+    local ext = string.match(filename, "%.(.*)$")
 
     local symbol, hl = require("nvim-web-devicons").get_icon(filename, ext)
     if not symbol then
@@ -196,7 +196,7 @@ local function getFileSymbol(filename)
 end
 
 local function getBufferIcon(flags)
-    flags = flags ~= '' and flags or 'h'
+    flags = flags ~= "" and flags or "h"
 
     -- if flags do not end with a or h extract trailing char (-> -, =, +, R, F)
     local iconFlag = string.match(flags, "([^ah])$")
@@ -215,9 +215,9 @@ local function formatFilename(filename, filename_max_length)
             return fn
         end
 
-        local substr_length = fn_max - string.len("...")
+        local substr_length = fn_max - string.len "..."
         if substr_length <= 0 then
-            return string.rep('.', fn_max)
+            return string.rep(".", fn_max)
         end
 
         return "..." .. string.sub(fn, -substr_length)
@@ -233,9 +233,11 @@ local function formatFilename(filename, filename_max_length)
         local path, file = split_filename(filename)
         local path_width = M.split_filename_path_width
         local file_width = filename_max_length - M.split_filename_path_width
-        filename = string.format('%-' .. file_width .. "s%-" .. path_width .. "s",
-                    trunc_filename(file, file_width),
-                    trunc_filename(path, path_width))
+        filename = string.format(
+            "%-" .. file_width .. "s%-" .. path_width .. "s",
+            trunc_filename(file, file_width),
+            trunc_filename(path, path_width)
+        )
     else
         filename = trunc_filename(filename, filename_max_length)
     end
@@ -245,7 +247,8 @@ end
 
 --[[*****************************************************
     ******************** END UTILS **********************
-    *****************************************************]]--
+    *****************************************************]]
+--
 
 -- Update window position
 function M.updatePos()
@@ -355,54 +358,47 @@ end
 
 -- Parse ls string
 function M.parseLs(buf)
-
     for i, ls_line in ipairs(M.bopen) do
         -- extract data from ls string
         local match_cmd = '(%d+)%s+([^%s]*)%s+"(.*)"'
         if not M.sort_mru then
-            match_cmd = match_cmd .. '%s*line%s(%d+)'
+            match_cmd = match_cmd .. "%s*line%s(%d+)"
         else
             -- dummy so we get '' as result for linenr
-            match_cmd = match_cmd .. '(%d*)'
+            match_cmd = match_cmd .. "(%d*)"
         end
 
-        local buffer_handle, flags, filename, linenr =
-            string.match(ls_line, match_cmd)
+        local buffer_handle, flags, filename, linenr = string.match(ls_line, match_cmd)
 
         -- get symbol and icon
-        local fn_symbol, fn_symbol_hl = '', nil
+        local fn_symbol, fn_symbol_hl = "", nil
         if M.use_devicons then
             fn_symbol, fn_symbol_hl = getFileSymbol(filename)
         end
         local icon, icon_hl = getBufferIcon(flags)
 
         -- format preLine and postLine
-        local preLine =
-            string.format(" %s %3d %s ", icon, buffer_handle, fn_symbol)
-        local postLine = linenr ~= '' and string.format("  %3d ", linenr) or ''
+        local preLine = string.format(" %s %3d %s ", icon, buffer_handle, fn_symbol)
+        local postLine = linenr ~= "" and string.format("  %3d ", linenr) or ""
 
         -- some symbols magic, they increase the string.len by more
         -- than 1 and this is a magic trick to get the extra width
-        local extra_width = #preLine + #postLine -
-            #string.gsub(preLine .. postLine, '[\128-\191]', '')
+        local extra_width = #preLine + #postLine - #string.gsub(preLine .. postLine, "[\128-\191]", "")
 
         -- determine filename field length and format filename
-        local filename_max_length =
-            M.win_conf.width - #preLine - #postLine + extra_width
+        local filename_max_length = M.win_conf.width - #preLine - #postLine + extra_width
         local filename_str = formatFilename(filename, filename_max_length)
 
         -- concat final line for the buffer
         local line = preLine .. filename_str .. postLine
 
         -- set line and highligh
-        api.nvim_buf_set_lines(buf, i, i+1, true, { line })
+        api.nvim_buf_set_lines(buf, i, i + 1, true, { line })
         api.nvim_buf_add_highlight(buf, -1, icon_hl, i, 0, -1)
-        if fn_symbol_hl and fn_symbol ~= '' then
+        if fn_symbol_hl and fn_symbol ~= "" then
             local pos = string.find(line, fn_symbol, 1, true)
-            api.nvim_buf_add_highlight(buf, -1, fn_symbol_hl, i, pos,
-                                       pos + string.len(fn_symbol))
+            api.nvim_buf_add_highlight(buf, -1, fn_symbol_hl, i, pos, pos + string.len(fn_symbol))
         end
-
     end
 end
 
@@ -527,7 +523,7 @@ function M.open()
     M.bopen = iter2array(string.gmatch(ls_result, "([^\n]+)"))
 
     if #M.bopen == 0 then
-        print("No buffer in list....")
+        print "No buffer in list...."
         return
     end
 
