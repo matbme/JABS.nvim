@@ -185,8 +185,12 @@ local function getFileSymbol(filename)
         return "", nil
     end
 
-    local ext = string.match(filename, "%.(.*)$")
+    local ext = filename
+    while string.match(ext, "%.(.*)$") do
+        ext = string.match(ext, "%.(.*)$")
+    end
 
+    print(ext)
     local symbol, hl = require("nvim-web-devicons").get_icon(filename, ext)
     if not symbol then
         symbol = M.default_file
@@ -360,7 +364,7 @@ end
 function M.parseLs(buf)
     for i, ls_line in ipairs(M.bopen) do
         -- extract data from ls string
-        local match_cmd = '(%d+)%s+([^%s]*)%s+"(.*)"'
+        local match_cmd = '(%d+)%s+([^%s]*)%s+([^%s]?)%s+"(.*)"'
         if not M.sort_mru then
             match_cmd = match_cmd .. "%s*line%s(%d+)"
         else
@@ -368,7 +372,7 @@ function M.parseLs(buf)
             match_cmd = match_cmd .. "(%d*)"
         end
 
-        local buffer_handle, flags, filename, linenr = string.match(ls_line, match_cmd)
+        local buffer_handle, flags, modified, filename, linenr = string.match(ls_line, match_cmd)
 
         -- get symbol and icon
         local fn_symbol, fn_symbol_hl = "", nil
@@ -377,8 +381,10 @@ function M.parseLs(buf)
         end
         local icon, icon_hl = getBufferIcon(flags)
 
+        local modified_icon = M.bufinfo[modified] or " "
+
         -- format preLine and postLine
-        local preLine = string.format(" %s %3d %s ", icon, buffer_handle, fn_symbol)
+        local preLine = string.format("%s %3d %s %s ", icon, buffer_handle, modified_icon, fn_symbol)
         local postLine = linenr ~= "" and string.format("  %3d ", linenr) or ""
 
         -- some symbols magic, they increase the string.len by more
