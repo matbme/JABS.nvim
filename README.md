@@ -46,7 +46,13 @@ A more complex config changing every default value would look like this:
 ```lua
 require 'jabs'.setup {
     -- Options for the main window
-    position = 'center', -- center, corner. Default corner
+    position = {'center', 'top'}, -- position = {'<position_x>', '<position_y>'} | <position_x> left, center, right,
+                                  --                                             <position_y> top, center, bottom
+                                  -- Default {'right', 'bottom'}
+
+    relative = 'editor', -- win, editor, cursor. Default win
+    clip_popup_size = false, -- clips the popup size to the win (or editor) size. Default true
+
     width = 80, -- default 50
     height = 20, -- default 10
     border = 'single', -- none, single, double, rounded, solid, shadow, (or an array or chars). Default shadow
