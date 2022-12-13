@@ -82,6 +82,8 @@ function M.setup(c)
 
     -- Fallback file symbol for devicon
     M.default_file = c.symbols.default_file or ""
+    -- File symbol for a terminal split
+    M.terminal_symbol = c.symbols.terminal_symbol or ""
 
     -- default width and height of the popup window
     M.default_width = c.width or 50
@@ -193,11 +195,16 @@ local function getFileSymbol(filename)
         return "", nil
     end
 
-    local ext =  string.match(filename, '%.([^%.]*)$')
+    local ext = string.match(filename, "%.([^%.]*)$")
 
     local symbol, hl = require("nvim-web-devicons").get_icon(filename, ext)
     if not symbol then
-        symbol = M.default_file
+        print(filename)
+        if filename:match "^term://" then
+            symbol = M.terminal_symbol
+        else
+            symbol = M.default_file
+        end
     end
 
     return symbol, hl
