@@ -199,7 +199,6 @@ local function getFileSymbol(filename)
 
     local symbol, hl = require("nvim-web-devicons").get_icon(filename, ext)
     if not symbol then
-        print(filename)
         if filename:match "^term://" then
             symbol = M.terminal_symbol
         else
@@ -218,7 +217,7 @@ local function getBufferIcon(flags)
     iconFlag = iconFlag or flags
 
     -- extract '#' or '.*[ah]'
-    local hlFlag = string.match(flags, "(.[ah#])")
+    local hlFlag = string.match(flags, "(.?[ah#])[RF]?")
     hlFlag = hlFlag or flags
 
     return M.bufinfo[iconFlag], M.highlight[hlFlag]
