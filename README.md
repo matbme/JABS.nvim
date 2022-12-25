@@ -25,7 +25,7 @@ use 'matbme/JABS.nvim'
 
 ## Usage
 
-As previously mentioned, JABS only has one command: `:JABSOpen`, which opens JABS' window.
+As previously mentioned, JABS only has one command: `:JABS`, which toggles the JABS popup.
 
 By default, you can navigate between buffers with `j` and `k` as well as `<Tab>` and `<S-Tab>`, and jump to a buffer with `<CR>`. When switching buffers the window closes automatically, but it can also be closed with `<Esc>` or `q`.
 
