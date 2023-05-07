@@ -605,9 +605,9 @@ function M.open()
         return
     end
 
-    M.back_win = api.nvim_get_current_win()
     -- Create the buffer for the window
     if not M.main_buf and not M.main_win then
+        M.back_win = api.nvim_get_current_win()
         M.updatePos()
         M.main_buf = api.nvim_create_buf(false, true)
         vim.bo[M.main_buf]["filetype"] = "JABSwindow"
