@@ -34,6 +34,11 @@ function M.setup(c)
         c.highlight = {}
     end
 
+    -- If win_highlight opts table not provided in config
+    if not c.win_highlight then
+        c.win_highlight = {}
+    end
+
     -- If symbol opts table not provided in config
     if not c.symbols then
         c.symbols = {}
@@ -89,6 +94,13 @@ function M.setup(c)
     M.default_width = c.width or 50
     M.default_height = c.height or 10
     M.clip_popup_size = not (c.clip_popup_size == false)
+
+    -- Window highlighting
+    M.win_highlight = {
+        enabled = c.win_highlight.enabled or false,
+        hl_groups = c.win_highlight.hl_groups or "Normal:Visual",
+        win_count_trigger = c.win_highlight.win_count_trigger or 2
+    }
 
     -- Main window setup
     M.win_conf = {
@@ -558,6 +570,11 @@ function M.close()
     api.nvim_set_current_win(M.back_win)
     M.main_win = nil
     M.main_buf = nil
+
+    -- reset highlighting to normal
+    if M.win_highlight.enabled then
+        vim.opt.winhighlight = Normal
+    end
 end
 
 -- Set autocmds for JABS window
@@ -607,6 +624,13 @@ function M.open()
 
     -- Create the buffer for the window
     if not M.main_buf and not M.main_win then
+        -- only set if more than 'win_count_trigger' split windows
+        local count_trigger = M.win_highlight.win_count_trigger
+
+        if vim.fn.winnr('$') >= count_trigger and M.win_highlight.enabled then
+            vim.opt.winhighlight = M.win_highlight.hl_groups
+        end
+
         M.back_win = api.nvim_get_current_win()
         M.updatePos()
         M.main_buf = api.nvim_create_buf(false, true)
