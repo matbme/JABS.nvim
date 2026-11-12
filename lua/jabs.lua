@@ -65,14 +65,14 @@ function M.setup(c)
 
     -- Buffer info symbols
     M.bufinfo = {
-        ["%a"] = c.symbols.current or "",
+        ["%a"] = c.symbols.current or "",
         ["#a"] = c.symbols.split or "",
         ["a"] = c.symbols.split or "",
-        ["#h"] = c.symbols.alternate or "",
-        ["h"] = c.symbols.hidden or "﬘",
-        ["-"] = c.symbols.locked or "",
-        ["="] = c.symbols.ro or "",
-        ["+"] = c.symbols.edited or "",
+        ["#h"] = c.symbols.alternate or "",
+        ["h"] = c.symbols.hidden or "",
+        ["-"] = c.symbols.locked or "󰌾",
+        ["="] = c.symbols.ro or "󰈈",
+        ["+"] = c.symbols.edited or "󰏫",
         ["R"] = c.symbols.terminal or "",
         ["F"] = c.symbols.terminal or "",
     }
