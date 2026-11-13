@@ -1,6 +1,8 @@
 local M = {}
 local api = vim.api
 
+local safe_unpack = unpack or table.unpack
+
 -- JABS main popup
 M.main_win = nil
 M.main_buf = nil
@@ -65,18 +67,17 @@ function M.setup(c)
 
     -- Buffer info symbols
     M.bufinfo = {
-        ["%a"] = c.symbols.current or "",
+        ["%a"] = c.symbols.current or "",
         ["#a"] = c.symbols.split or "",
         ["a"] = c.symbols.split or "",
-        ["#h"] = c.symbols.alternate or "",
-        ["h"] = c.symbols.hidden or "﬘",
-        ["-"] = c.symbols.locked or "",
-        ["="] = c.symbols.ro or "",
-        ["+"] = c.symbols.edited or "",
+        ["#h"] = c.symbols.alternate or "",
+        ["h"] = c.symbols.hidden or "",
+        ["-"] = c.symbols.locked or "󰌾",
+        ["="] = c.symbols.ro or "󰈈",
+        ["+"] = c.symbols.edited or "󰏫",
         ["R"] = c.symbols.terminal or "",
         ["F"] = c.symbols.terminal or "",
     }
-
     -- Use devicons file symbols
     M.use_devicons = not (c.use_devicons == false)
 
@@ -188,8 +189,14 @@ local function getBufferHandleFromLine(line)
     return assert(tonumber(handle))
 end
 
+
 -- Get file symbol from devicons
 local function getFileSymbol(filename)
+    -- Safety check for nil or empty filenames
+    if not filename or filename == "" then
+        return M.default_file, nil
+    end
+
     local devicons = pcall(require, "nvim-web-devicons")
     if not devicons then
         return "", nil
@@ -229,7 +236,7 @@ local function formatFilename(filename, filename_max_length)
             return fn
         end
 
-        local substr_length = fn_max - string.len "..."
+        local substr_length = fn_max - string.len("...")
         if substr_length <= 0 then
             return string.rep(".", fn_max)
         end
@@ -268,7 +275,8 @@ end
 function M.updatePos()
     assert(type(M.conf.position) == "table")
     assert(#M.conf.position == 2)
-    local position_x, position_y = unpack(M.conf.position)
+
+    local position_x, position_y = safe_unpack(M.conf.position)
     local relative = M.win_conf.relative
 
     -- determine max width and height
@@ -364,7 +372,7 @@ function M.selBufNum(win, opt, count)
     M.close()
 
     if not buf then
-        print "Buffer number not found!"
+        print("Buffer number not found!")
         return
     end
 
@@ -436,16 +444,19 @@ end
 -- Parse ls string
 function M.parseLs(buf)
     for i, ls_line in ipairs(M.bopen) do
-        -- extract data from ls string
-        local match_cmd = '(%d+)%s+([^%s]*)%s+([^%s]?)%s+"(.*)"'
-        if not M.sort_mru then
-            match_cmd = match_cmd .. "%s*line%s(%d+)"
-        else
-            -- dummy so we get '' as result for linenr
-            match_cmd = match_cmd .. "(%d*)"
+        -- Robustly extract data from ls string
+        local buffer_handle = string.match(ls_line, "^%s*(%d+)")
+        local filename = string.match(ls_line, '"(.-)"') or "[No Name]"
+        local linenr = string.match(ls_line, "line%s+(%d+)") or ""
+
+        if M.sort_mru then
+            linenr = ""
         end
 
-        local buffer_handle, flags, modified, filename, linenr = string.match(ls_line, match_cmd)
+        -- Extract flags string between buffer handle and filename
+        local flags_str = string.match(ls_line, "^%s*%d+%s+(.-)%s*\"") or ""
+        local flags = string.match(flags_str, "([^%+%-%=%s]+)") or ""
+        local modified = string.match(flags_str, "([%+%-%=])") or ""
 
         -- get symbol and icon
         local fn_symbol, fn_symbol_hl = "", nil
@@ -457,8 +468,8 @@ function M.parseLs(buf)
         local modified_icon = M.bufinfo[modified] or " "
 
         -- format preLine and postLine
-        local preLine = string.format("%s %3d %s %s ", icon, buffer_handle, modified_icon, fn_symbol)
-        local postLine = linenr ~= "" and string.format("  %3d ", linenr) or ""
+        local preLine = string.format("%s %3d %s %s ", icon, tonumber(buffer_handle) or 0, modified_icon, fn_symbol)
+        local postLine = linenr ~= "" and string.format("  %3d ", tonumber(linenr) or 0) or ""
 
         -- some symbols magic, they increase the string.len by more
         -- than 1 and this is a magic trick to get the extra width
@@ -476,7 +487,9 @@ function M.parseLs(buf)
         api.nvim_buf_add_highlight(buf, -1, icon_hl, i, 0, -1)
         if fn_symbol_hl and fn_symbol ~= "" then
             local pos = string.find(line, fn_symbol, 1, true)
-            api.nvim_buf_add_highlight(buf, -1, fn_symbol_hl, i, pos, pos + string.len(fn_symbol))
+            if pos then
+                api.nvim_buf_add_highlight(buf, -1, fn_symbol_hl, i, pos - 1, pos - 1 + string.len(fn_symbol))
+            end
         end
     end
 end
@@ -543,9 +556,9 @@ function M.setKeymaps(win, buf)
 end
 
 function M.close()
-    api.nvim_clear_autocmds {
+    api.nvim_clear_autocmds({
         group = "JABS",
-    }
+    })
 
     -- If JABS is closed using :q the window and buffer indicator variables
     -- are not reset, so we need to take this into account
@@ -581,7 +594,8 @@ function M.refresh(buf)
         empty[#empty + 1] = string.rep(" ", M.win_conf.width)
     end
 
-    api.nvim_buf_set_option(buf, "modifiable", true)
+    -- FIXED: api.nvim_buf_set_option is deprecated, use vim.bo
+    vim.bo[buf].modifiable = true
     api.nvim_buf_set_lines(buf, 0, -1, false, empty)
 
     M.parseLs(buf)
@@ -592,16 +606,19 @@ function M.refresh(buf)
     api.nvim_buf_add_highlight(buf, -1, "Folded", 0, 0, -1)
 
     -- Disable modifiable when done
-    api.nvim_buf_set_option(buf, "modifiable", false)
+    -- FIXED: api.nvim_buf_set_option is deprecated, use vim.bo
+    vim.bo[buf].modifiable = false
 end
 
 -- Floating buffer list
 function M.open()
-    local ls_result = api.nvim_exec(M.sort_mru and ":ls t" or ":ls", true)
+    -- FIXED: api.nvim_exec is deprecated, use api.nvim_exec2
+    local ls_command = M.sort_mru and ":ls t" or ":ls"
+    local ls_result = api.nvim_exec2(ls_command, { output = true }).output
     M.bopen = iter2array(string.gmatch(ls_result, "([^\n]+)"))
 
     if #M.bopen == 0 then
-        print "No buffer in list...."
+        print("No buffer in list....")
         return
     end
 
@@ -611,6 +628,12 @@ function M.open()
         M.updatePos()
         M.main_buf = api.nvim_create_buf(false, true)
         vim.bo[M.main_buf]["filetype"] = "JABSwindow"
+
+        -- FIXED: If layout is relative to "win", Neovim strictly requires passing the window ID
+        if M.win_conf.relative == "win" and not M.win_conf.win then
+            M.win_conf.win = api.nvim_get_current_win()
+        end
+
         M.main_win = api.nvim_open_win(M.main_buf, 1, M.win_conf)
         if M.main_win ~= 0 then
             M.refresh(M.main_buf)
